@@ -210,7 +210,11 @@ class BenchmarkEvaluator:
         The same ``{name: metrics}`` dictionary that :meth:`run` returns.
         """
         output_path = Path(output_path)
-        callback = (lambda results: self._save_payload(results, output_path, meta)) if incremental else None
+        callback = (
+            (lambda results: self._save_payload(results, output_path, meta))
+            if incremental
+            else None
+        )
 
         all_results = self.run(
             detectors,
