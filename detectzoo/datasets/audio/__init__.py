@@ -2,6 +2,6 @@
 
 from detectzoo.datasets.audio.asvspoof2019 import ASVspoof2019Dataset
 from detectzoo.datasets.audio.for_dataset import FoRDataset
-from detectzoo.datasets.audio.wavefake import WaveFakeDataset
+from detectzoo.datasets.audio.in_the_wild import InTheWildDataset
 
-__all__ = ["ASVspoof2019Dataset", "FoRDataset", "WaveFakeDataset"]
+__all__ = ["ASVspoof2019Dataset", "FoRDataset", "InTheWildDataset"]
