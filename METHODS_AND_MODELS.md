@@ -186,4 +186,4 @@ Datasets integrate with `load_dataset(name, ...)` (see registry via `list_datase
 |---------|-------|-------------|----------------------|
 | ASVspoof 2019 | `ASVspoof2019Dataset` | Logical Access (LA) spoofing attacks benchmark — standard anti-spoofing evaluation corpus. Registry: `asvspoof2019`. | Official website |
 | FoR | `FoRDataset` | Fake-or-Real speech corpus covering a range of TTS and voice conversion systems. Registry: `for`. | Official website |
-| In-the-Wild (Deepfake-Eval-2024) | `InTheWildDataset` | In-the-wild deepfakes from social media (2024); ~40k labelled audio clips. Registry: `in_the_wild` (aliases: `deepfake_eval_2024`). | Hugging Face (`nuriachandra/Deepfake-Eval-2024`, gated) |
+| Deepfake-Eval-2024 | `DeepfakeEval2024Dataset` | Multi-modal in-the-wild deepfakes from social media and TrueMedia.org (2024); audio split ~40k clips. Registry: `deepfake_eval_2024`. | Hugging Face (`nuriachandra/Deepfake-Eval-2024`, gated) |

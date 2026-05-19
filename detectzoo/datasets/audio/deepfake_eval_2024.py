@@ -1,4 +1,4 @@
-"""Deepfake-Eval-2024 audio — in-the-wild deepfake speech (2024).
+"""Deepfake-Eval-2024 audio (Chandra et al., 2025).
 
 Reference:
     Chandra et al., "Deepfake-Eval-2024: A Multi-Modal In-the-Wild Benchmark of
@@ -7,6 +7,9 @@ Reference:
 
 HuggingFace (gated — accept terms and ``huggingface-cli login`` first):
     ``nuriachandra/Deepfake-Eval-2024``
+
+Not to be confused with Müller et al. "In-The-Wild" (Interspeech 2022;
+``mueller91/In-The-Wild``) — a separate celebrity YouTube corpus.
 
 Layout (under the dataset root)::
 
@@ -22,7 +25,7 @@ from __future__ import annotations
 
 import csv
 from pathlib import Path
-from typing import Any, List, Optional, Sequence
+from typing import Any, List, Optional
 
 from detectzoo.core.registry import register_dataset
 from detectzoo.datasets.base import BaseDataset, DatasetItem
@@ -75,7 +78,7 @@ def _find_metadata_csv(root: Path) -> Path:
         if p.is_file():
             return p
     raise FileNotFoundError(
-        f"In-the-Wild (Deepfake-Eval-2024): no metadata CSV under {root}. "
+        f"Deepfake-Eval-2024: no metadata CSV under {root}. "
         f"Expected one of: {', '.join(_METADATA_CANDIDATES)}"
     )
 
@@ -95,7 +98,7 @@ def _resolve_dataset_root(user_path: Path) -> Path:
                 continue
             return sub
     raise FileNotFoundError(
-        f"In-the-Wild: could not locate {_METADATA_CANDIDATES[0]!r} under {user_path}"
+        f"Deepfake-Eval-2024: could not locate {_METADATA_CANDIDATES[0]!r} under {user_path}"
     )
 
 
@@ -125,7 +128,7 @@ def _load_from_metadata(
     audio_dir = root / _AUDIO_SUBDIR
     if not audio_dir.is_dir():
         raise FileNotFoundError(
-            f"In-the-Wild: expected audio directory {audio_dir}"
+            f"Deepfake-Eval-2024: expected audio directory {audio_dir}"
         )
 
     items: List[DatasetItem] = []
@@ -134,7 +137,7 @@ def _load_from_metadata(
     with open(meta_path, encoding="utf-8", newline="") as fh:
         reader = csv.DictReader(fh)
         if reader.fieldnames is None:
-            raise ValueError(f"In-the-Wild: empty metadata file {meta_path}")
+            raise ValueError(f"Deepfake-Eval-2024: empty metadata file {meta_path}")
 
         for row in reader:
             filename = _row_get(row, "Filename", "filename", "file")
@@ -158,7 +161,8 @@ def _load_from_metadata(
                 if skip_missing:
                     continue
                 raise FileNotFoundError(
-                    f"In-the-Wild: audio missing for {filename!r} (looked under {audio_dir})"
+                    f"Deepfake-Eval-2024: audio missing for {filename!r} "
+                    f"(looked under {audio_dir})"
                 )
 
             meta: dict[str, Any] = {
@@ -178,14 +182,14 @@ def _load_from_metadata(
 
     if not items:
         raise RuntimeError(
-            f"In-the-Wild: no labelled audio loaded from {meta_path} "
+            f"Deepfake-Eval-2024: no labelled audio loaded from {meta_path} "
             f"(split={split!r})."
         )
     if missing and skip_missing:
         from detectzoo.utils.logger import get_logger
 
         get_logger(__name__).warning(
-            "In-the-Wild: skipped %d missing files (first: %s)",
+            "Deepfake-Eval-2024: skipped %d missing files (first: %s)",
             len(missing),
             missing[0],
         )
@@ -193,29 +197,25 @@ def _load_from_metadata(
 
 
 @register_dataset(
-    "in_the_wild",
-    aliases=[
-        "in-the-wild",
-        "inthewild",
-        "deepfake_eval_2024",
-        "deepfake-eval-2024",
-    ],
+    "deepfake_eval_2024",
+    aliases=["deepfake-eval-2024", "deepfake_eval", "df_eval_2024"],
 )
-class InTheWildDataset(BaseDataset):
-    """Deepfake-Eval-2024 audio — in-the-wild bonafide vs. deepfake speech.
+class DeepfakeEval2024Dataset(BaseDataset):
+    """Deepfake-Eval-2024 audio — bonafide vs. deepfake speech (2024).
 
-    ~40k labelled clips from social media and TrueMedia.org (2024). When
-    ``path`` is omitted the dataset is fetched from HuggingFace
-    (``nuriachandra/Deepfake-Eval-2024``). Access is **gated**: accept the
-    dataset terms on HuggingFace and run ``huggingface-cli login`` before
-    downloading.
+    Multi-modal benchmark (Chandra et al., 2025); this loader exposes the
+    **audio** split only (~40k labelled clips from social media and
+    TrueMedia.org). When ``path`` is omitted the dataset is fetched from
+    HuggingFace (``nuriachandra/Deepfake-Eval-2024``). Access is **gated**:
+    accept the dataset terms on HuggingFace and run ``huggingface-cli login``
+    before downloading.
 
     Parameters
     ----------
     path
         Local root containing ``audio-metadata-publish.csv`` and
         ``audio-data/``. When omitted, files are cached under
-        ``<cache_dir>/in_the_wild/``.
+        ``<cache_dir>/deepfake_eval_2024/``.
     split
         ``\"train\"``, ``\"test\"``, or ``\"all\"`` (default). Uses the
         official ``Finetuning Set`` column from the metadata CSV.
@@ -231,7 +231,7 @@ class InTheWildDataset(BaseDataset):
         Optional cap (see :class:`~detectzoo.datasets.base.BaseDataset`).
     """
 
-    name = "in_the_wild"
+    name = "deepfake_eval_2024"
     modality = "audio"
 
     def __init__(
@@ -262,7 +262,7 @@ class InTheWildDataset(BaseDataset):
 
         if not self.download:
             raise ValueError(
-                "InTheWildDataset: path is None and download=False — "
+                "DeepfakeEval2024Dataset: path is None and download=False — "
                 "provide a local `path` or enable download."
             )
 
@@ -271,7 +271,7 @@ class InTheWildDataset(BaseDataset):
 
         from detectzoo.datasets._download import get_cache_dir
 
-        dest = get_cache_dir("in_the_wild", self.cache_dir)
+        dest = get_cache_dir("deepfake_eval_2024", self.cache_dir)
         marker = dest / ".download_complete"
         if marker.is_file():
             return _resolve_dataset_root(dest)
