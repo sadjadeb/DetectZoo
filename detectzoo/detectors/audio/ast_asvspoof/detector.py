@@ -24,8 +24,8 @@ Architecture (MIT/AST)
 
 This is the first **pure-transformer-on-spectrogram** detector in DetectZoo —
 it complements the existing graph-attention (AASIST/RawGAT-ST), residual-CNN
-(Res-TSSDNet, RawNet2), embedding-margin (SAMO), and Whisper-encoder
-(Whisper-MesoNet) approaches with a fundamentally different inductive bias.
+(Res-TSSDNet, RawNet2), and embedding-margin (SAMO) approaches with a
+fundamentally different inductive bias.
 
 Score convention
 ----------------
@@ -68,7 +68,7 @@ _BONAFIDE_LABEL_SYNONYMS: Tuple[str, ...] = ("bonafide", "real", "human", "genui
 
 # ---------------------------------------------------------------------------
 # Audio I/O helpers — mirror the conventions used by the other audio
-# detectors in DetectZoo (whisper_mesonet, aasist, rawnet2 …).
+# detectors in DetectZoo (aasist, rawnet2, …).
 # ---------------------------------------------------------------------------
 
 def _load_audio_to_numpy(

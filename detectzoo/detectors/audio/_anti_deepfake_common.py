@@ -78,7 +78,7 @@ _SAFETENSORS_FILENAME = "model.safetensors"
 
 # ---------------------------------------------------------------------------
 # Audio I/O helpers (same conventions as the other audio detectors in
-# DetectZoo: ast_asvspoof, melody_wav2vec, xlsr_sls, ...).
+# DetectZoo: ast_asvspoof, xlsr_sls, ...).
 # ---------------------------------------------------------------------------
 
 def load_audio_to_numpy(

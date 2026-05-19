@@ -75,7 +75,7 @@ _BONAFIDE_LABEL_SYNONYMS: Tuple[str, ...] = ("bonafide", "real", "human", "genui
 
 # ---------------------------------------------------------------------------
 # Audio I/O helpers — mirror the conventions used by the other audio
-# detectors in DetectZoo (ast_asvspoof, melody_wav2vec, ...).
+# detectors in DetectZoo (ast_asvspoof, aasist, ...).
 # ---------------------------------------------------------------------------
 
 def _load_audio_to_numpy(
