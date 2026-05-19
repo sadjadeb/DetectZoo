@@ -4,6 +4,7 @@ from detectzoo.datasets.audio import (
     ASVspoof2019Dataset,
     DeepfakeEval2024Dataset,
     FoRDataset,
+    InTheWildDataset,
 )
 from detectzoo.datasets.base import BaseDataset, DatasetItem
 from detectzoo.datasets.image import (
@@ -32,6 +33,7 @@ __all__ = [
     "DatasetItem",
     "ASVspoof2019Dataset",
     "FoRDataset",
+    "InTheWildDataset",
     "DeepfakeEval2024Dataset",
     "AIGCDetectDataset",
     "CNNDetectionDataset",
