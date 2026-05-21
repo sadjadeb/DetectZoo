@@ -8,9 +8,10 @@ Reference:
 HuggingFace:
     ``mueller91/In-The-Wild`` — ``release_in_the_wild.zip`` (~8 GB).
 
-After extraction the release typically contains ``modified_meta.csv`` (columns
-``file``, ``label`` with ``real`` / ``fake``) and ``.wav`` clips, often organised
-under ``real/`` and ``fake/`` subfolders.
+After extraction the release typically contains ``meta.csv`` or
+``modified_meta.csv`` (columns ``file``, ``label`` with ``bona-fide`` / ``real`` /
+``fake``) and ``.wav`` clips, often organised under ``real/`` and ``fake/``
+subfolders.
 
 Not to be confused with Deepfake-Eval-2024 (Chandra et al., 2025).
 """
@@ -38,7 +39,7 @@ def _norm_name(name: str) -> str:
 
 
 def _label_from_str(value: str) -> Optional[int]:
-    v = value.strip().lower()
+    v = _norm_name(value)
     if v in ("real", "bonafide", "genuine", "human", "original", "0"):
         return 0
     if v in ("fake", "spoof", "synthetic", "deepfake", "1"):
