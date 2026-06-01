@@ -138,7 +138,6 @@ def _load_from_metadata_csv(root: Path, meta_path: Path) -> List[DatasetItem]:
         reader = csv.DictReader(fh)
         if reader.fieldnames is None:
             raise ValueError(f"In-The-Wild: empty metadata file {meta_path}")
-
         field_map = {f.strip().lower(): f for f in reader.fieldnames}
         file_col = field_map.get("file") or field_map.get("filename") or field_map.get("path")
         label_col = field_map.get("label") or field_map.get("class") or field_map.get("ground_truth")
