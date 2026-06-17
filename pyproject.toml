@@ -51,6 +51,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+xlsr_mamba = [
+    # Build against your installed PyTorch wheel (CUDA on GPU hosts).
+    "mamba-ssm>=2.2.0",
+]
+tcm = [
+    "einops>=0.7.0",
+]
+safeear = [
+    "einops>=0.7.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
