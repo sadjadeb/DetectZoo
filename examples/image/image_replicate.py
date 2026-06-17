@@ -8,13 +8,12 @@ Example:
 """
 
 import argparse
-import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
+import torch
 
+from detectzoo import load_dataset, load_detector
+from detectzoo.benchmarks.evaluator import BenchmarkEvaluator
 
 DATASETS_DICT = {
     "self_synthesis": {
@@ -52,7 +51,7 @@ def parse_args():
     parser.add_argument("--detectors", nargs="+", required=True)
     parser.add_argument("--save-scores", action="store_true")
     parser.add_argument("--cpu", action="store_true")
-    parser.add_argument("--output-dir", type=Path, default=Path("results"))
+    parser.add_argument("--output-dir", type=Path, default=Path("experiments"))
     return parser.parse_args()
 
 
@@ -65,10 +64,6 @@ def build_output_path(dataset_name, partitions, output_dir):
 def main():
     args = parse_args()
     dataset_info = DATASETS_DICT[args.dataset]
-
-    import torch
-    from detectzoo import load_dataset, load_detector
-    from detectzoo.benchmarks.evaluator import BenchmarkEvaluator
 
     device = "cpu" if args.cpu else ("cuda" if torch.cuda.is_available() else "cpu")
 

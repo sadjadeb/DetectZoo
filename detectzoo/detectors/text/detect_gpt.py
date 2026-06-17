@@ -95,9 +95,9 @@ class DetectGPTDetector(BaseTextDetector):
 
         logger.info("Loading perturbation model '%s' …", self.perturbation_model_name)
         self._ptokenizer = AutoTokenizer.from_pretrained(self.perturbation_model_name)
-        self._pmodel = AutoModelForSeq2SeqLM.from_pretrained(
-            self.perturbation_model_name
-        ).to(self._device)
+        self._pmodel = AutoModelForSeq2SeqLM.from_pretrained(self.perturbation_model_name).to(
+            self._device
+        )
         self._pmodel.eval()
 
     # ------------------------------------------------------------------

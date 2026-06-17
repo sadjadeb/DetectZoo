@@ -76,15 +76,15 @@ class IRMDetector(BaseTextDetector):
         if self._shared_tokenizer.pad_token is None:
             self._shared_tokenizer.pad_token = self._shared_tokenizer.eos_token
 
-        self._instruct_model = AutoModelForCausalLM.from_pretrained(
-            self.instruct_model_name
-        ).to(self._device)
+        self._instruct_model = AutoModelForCausalLM.from_pretrained(self.instruct_model_name).to(
+            self._device
+        )
         self._instruct_model.eval()
 
         logger.info("Loading IRM base model '%s' …", self.base_model_name)
-        self._base_model_obj = AutoModelForCausalLM.from_pretrained(
-            self.base_model_name
-        ).to(self._device)
+        self._base_model_obj = AutoModelForCausalLM.from_pretrained(self.base_model_name).to(
+            self._device
+        )
         self._base_model_obj.eval()
 
         self._model = self._instruct_model
@@ -122,12 +122,8 @@ class IRMDetector(BaseTextDetector):
         instruct_lp = F.log_softmax(instruct_logits, dim=-1)
         base_lp = F.log_softmax(base_logits, dim=-1)
 
-        instruct_token_lp = instruct_lp.gather(
-            2, shift_labels.unsqueeze(-1)
-        ).squeeze(-1)
-        base_token_lp = base_lp.gather(
-            2, shift_labels.unsqueeze(-1)
-        ).squeeze(-1)
+        instruct_token_lp = instruct_lp.gather(2, shift_labels.unsqueeze(-1)).squeeze(-1)
+        base_token_lp = base_lp.gather(2, shift_labels.unsqueeze(-1)).squeeze(-1)
 
         # IRM score: sum of per-token log-prob differences
         score = float((instruct_token_lp - base_token_lp).sum())

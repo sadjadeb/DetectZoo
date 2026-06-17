@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "detectzoo"
-version = "0.1.0"
+version = "0.1.4"
 description = "DetectZoo: A Unified Toolkit for AI-Generated Content Detection Across Text, Audio, and Image Modalities"
 readme = "README.md"
 requires-python = ">=3.9"
-license = {text = "Apache-2.0"}
+license = "Apache-2.0"
 keywords = ["ai-detection", "deepfake", "llm", "generative-ai", "machine-learning"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -36,14 +36,6 @@ dependencies = [
     "torch>=2.11.0",
     "tqdm>=4.67.3",
     "transformers>=4.57.6",
-]
-
-[project.optional-dependencies]
-datasets = [
-    "modelscope>=1.9",
-    "gdown>=4.0",
-]
-image = [
     "torchvision>=0.26.0",
     "Pillow>=12.1.1",
     "open-clip-torch>=2.20",
@@ -51,14 +43,15 @@ image = [
     "lpips>=0.1.4",
     "pytorch-wavelets>=1.3",
     "timm>=0.9.0",
-]
-audio = [
+    "modelscope>=1.9",
+    "gdown>=4.0",
     "torchaudio>=2.11.0",
     "librosa>=0.11.0",
     "soundfile>=0.13.1",
 ]
+
+[project.optional-dependencies]
 dev = [
-    "detectzoo[datasets,image,audio]",
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "ruff>=0.15.5",
@@ -71,6 +64,7 @@ Issues = "https://anonymous.4open.science/r/DetectZoo-1BEC/issues"
 
 [tool.setuptools.packages.find]
 include = ["detectzoo*"]
+exclude = ["tests*"]
 
 [tool.ruff]
 line-length = 100

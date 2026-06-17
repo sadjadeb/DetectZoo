@@ -19,9 +19,7 @@ from typing import Any, List
 from detectzoo.core.registry import register_dataset
 from detectzoo.datasets.base import BaseDataset, DatasetItem
 
-_HF_ZIP_URL = (
-    "https://huggingface.co/datasets/turingbench/TuringBench/resolve/main/TuringBench.zip"
-)
+_HF_ZIP_URL = "https://huggingface.co/datasets/turingbench/TuringBench/resolve/main/TuringBench.zip"
 
 # Binary Turing-Test (human vs. one generator) configurations.
 _TT_MODELS: tuple[str, ...] = (
@@ -146,13 +144,9 @@ class TuringBenchDataset(BaseDataset):
     ) -> None:
         super().__init__(**kwargs)
         if config not in _CONFIGS:
-            raise ValueError(
-                f"Unknown TuringBench config '{config}'. Valid: {list(_CONFIGS)}"
-            )
+            raise ValueError(f"Unknown TuringBench config '{config}'. Valid: {list(_CONFIGS)}")
         if split not in _SPLIT_FILES:
-            raise ValueError(
-                f"Unknown TuringBench split '{split}'. Valid: {list(_SPLIT_FILES)}"
-            )
+            raise ValueError(f"Unknown TuringBench split '{split}'. Valid: {list(_SPLIT_FILES)}")
         self.path = Path(path) if path is not None else None
         self.config = config
         self.split = split
@@ -179,9 +173,7 @@ class TuringBenchDataset(BaseDataset):
         for cand in candidates:
             if cand.exists():
                 return cand
-        raise FileNotFoundError(
-            f"Could not find {self.config}/{filename} under {data_dir}."
-        )
+        raise FileNotFoundError(f"Could not find {self.config}/{filename} under {data_dir}.")
 
     @staticmethod
     def _map_label(raw_label: str) -> int:
@@ -208,13 +200,15 @@ class TuringBenchDataset(BaseDataset):
             for row in reader:
                 text = row.get("Generation") or row.get("generation") or ""
                 raw_label = row.get("label", "")
-                items.append(DatasetItem(
-                    data=text,
-                    label=self._map_label(raw_label),
-                    metadata={
-                        "config": self.config,
-                        "split": self.split,
-                        "raw_label": raw_label,
-                    },
-                ))
+                items.append(
+                    DatasetItem(
+                        data=text,
+                        label=self._map_label(raw_label),
+                        metadata={
+                            "config": self.config,
+                            "split": self.split,
+                            "raw_label": raw_label,
+                        },
+                    )
+                )
         return items

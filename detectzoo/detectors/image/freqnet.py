@@ -27,8 +27,7 @@ from detectzoo.utils.io import load_image
 _IMAGENET = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 _CKPT_NAME = "4-classes-freqnet-v2.pth"
 _CKPT_URL = (
-    "https://github.com/chuangchuangtan/FreqNet-DeepfakeDetection/"
-    "raw/main/4-classes-freqnet-v2.pth"
+    "https://github.com/chuangchuangtan/FreqNet-DeepfakeDetection/raw/main/4-classes-freqnet-v2.pth"
 )
 
 
@@ -78,7 +77,7 @@ class _Bottleneck(nn.Module):
 
 
 class _FreqNet(nn.Module):
-    """Matches upstream ``networks/freqnet.py``. """
+    """Matches upstream ``networks/freqnet.py``."""
 
     def __init__(
         self,
@@ -153,7 +152,12 @@ class _FreqNet(nn.Module):
         x = torch.fft.fft2(x, norm="ortho")
         x = torch.fft.fftshift(x, dim=[-2, -1])
         b, c, h, w = x.shape
-        x[:, :, h // 2 - h // scale : h // 2 + h // scale, w // 2 - w // scale : w // 2 + w // scale] = 0.0
+        x[
+            :,
+            :,
+            h // 2 - h // scale : h // 2 + h // scale,
+            w // 2 - w // scale : w // 2 + w // scale,
+        ] = 0.0
         x = torch.fft.ifftshift(x, dim=[-2, -1])
         x = torch.fft.ifft2(x, norm="ortho")
         x = torch.real(x)
@@ -322,8 +326,7 @@ class FreqNetDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     @torch.no_grad()

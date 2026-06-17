@@ -78,9 +78,8 @@ _BONAFIDE_LABEL_SYNONYMS: Tuple[str, ...] = ("bonafide", "real", "human", "genui
 # detectors in DetectZoo (ast_asvspoof, aasist, ...).
 # ---------------------------------------------------------------------------
 
-def _load_audio_to_numpy(
-    path: Union[str, Path], target_sr: int = _SAMPLE_RATE
-) -> np.ndarray:
+
+def _load_audio_to_numpy(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> np.ndarray:
     """Load an audio file -> mono float32 numpy array at ``target_sr``."""
     try:
         import torchaudio
@@ -139,6 +138,7 @@ def _resolve_label_indices(id2label: Dict[int, str]) -> Tuple[int, int]:
 # ---------------------------------------------------------------------------
 # Detector wrapper
 # ---------------------------------------------------------------------------
+
 
 @register_detector(
     "xlsr_sls",
@@ -227,9 +227,7 @@ class XLSRSLSDetector(BaseDetector):
         if checkpoint_path is not None:
             source = Path(checkpoint_path).expanduser().resolve()
             if not source.exists():
-                raise FileNotFoundError(
-                    f"checkpoint_path does not exist: {source}"
-                )
+                raise FileNotFoundError(f"checkpoint_path does not exist: {source}")
             _LOGGER.info("Loading XLSR-SLS from local directory %s", source)
             source = str(source)
         else:
@@ -267,9 +265,7 @@ class XLSRSLSDetector(BaseDetector):
         # Resolve which class index corresponds to "spoof"/"fake" (= AI).
         id2label = dict(self._model.config.id2label)
         auto_spoof, auto_bona = _resolve_label_indices(id2label)
-        self._spoof_idx = (
-            auto_spoof if spoof_label_index is None else int(spoof_label_index)
-        )
+        self._spoof_idx = auto_spoof if spoof_label_index is None else int(spoof_label_index)
         self._bonafide_idx = (
             auto_bona if bonafide_label_index is None else int(bonafide_label_index)
         )

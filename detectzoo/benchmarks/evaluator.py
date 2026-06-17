@@ -22,8 +22,15 @@ logger = get_logger(__name__)
 # anti-spoofing trio (EER / AUC / F1); image and text keep DetectZoo's
 # original column set unchanged.
 _DEFAULT_PRINT_COLUMNS = [
-    "detector", "accuracy", "precision", "recall", "f1",
-    "tpr", "fpr", "roc_auc", "pr_auc",
+    "detector",
+    "accuracy",
+    "precision",
+    "recall",
+    "f1",
+    "tpr",
+    "fpr",
+    "roc_auc",
+    "pr_auc",
 ]
 _PRINT_VIEWS = {
     "audio": ["detector", "eer", "roc_auc", "f1"],
@@ -98,10 +105,7 @@ class BenchmarkEvaluator:
         metrics["n_samples"] = len(labels)
 
         if save_scores:
-            metrics["samples"] = [
-                {"label": lbl, "score": scr}
-                for lbl, scr in zip(labels, scores)
-            ]
+            metrics["samples"] = [{"label": lbl, "score": scr} for lbl, scr in zip(labels, scores)]
 
         return metrics
 
@@ -159,8 +163,12 @@ class BenchmarkEvaluator:
         print(header)
         print("-" * len(header))
         for metrics in all_results.values():
-            row = " | ".join(f"{metrics.get(k, ''):>18}" if isinstance(metrics.get(k), str)
-                             else f"{metrics.get(k, 0):>18.4f}" for k in header_keys)
+            row = " | ".join(
+                f"{metrics.get(k, ''):>18}"
+                if isinstance(metrics.get(k), str)
+                else f"{metrics.get(k, 0):>18.4f}"
+                for k in header_keys
+            )
             print(row)
 
     def _save_payload(

@@ -50,16 +50,49 @@ DEFAULT_DETECTOR_NAMES: List[str] = [
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--max-samples", type=int, default=10000, help="Max RAID rows to load (default: 10000).")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--max-samples", type=int, default=10000, help="Max RAID rows to load (default: 10000)."
+    )
     p.add_argument("--split", type=str, default="test", help="RAID split (default: test).")
-    p.add_argument("--device", type=str, default="cuda", help="Device for detectors (default: cuda).")
-    p.add_argument("--hf-repo", type=str, default="Shengkun/Raid_split", help="HuggingFace dataset id for RAID split.")
-    p.add_argument("--attacks", nargs="+", default=None, help="Pass through to RAIDDataset (e.g. `none` for non-adversarial only).")
-    p.add_argument("--models", nargs="+", default=None, help="Pass through to RAIDDataset: restrict to these generators (e.g. `human` `chatgpt`).")
-    p.add_argument("--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names to run (default: OOD-paper set).")
-    p.add_argument("--output-dir", type=Path, default=Path("experiments"), help="Directory for result JSON files.")
-    p.add_argument("--save-scores", action="store_true", help="Store per-sample scores in the output JSON.")
+    p.add_argument(
+        "--device", type=str, default="cuda", help="Device for detectors (default: cuda)."
+    )
+    p.add_argument(
+        "--hf-repo",
+        type=str,
+        default="Shengkun/Raid_split",
+        help="HuggingFace dataset id for RAID split.",
+    )
+    p.add_argument(
+        "--attacks",
+        nargs="+",
+        default=None,
+        help="Pass through to RAIDDataset (e.g. `none` for non-adversarial only).",
+    )
+    p.add_argument(
+        "--models",
+        nargs="+",
+        default=None,
+        help="Pass through to RAIDDataset: restrict to these generators (e.g. `human` `chatgpt`).",
+    )
+    p.add_argument(
+        "--detectors",
+        nargs="+",
+        default=DEFAULT_DETECTOR_NAMES,
+        help="Detector registry names to run (default: OOD-paper set).",
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("experiments"),
+        help="Directory for result JSON files.",
+    )
+    p.add_argument(
+        "--save-scores", action="store_true", help="Store per-sample scores in the output JSON."
+    )
     return p.parse_args()
 
 
@@ -80,8 +113,7 @@ def main() -> None:
         ds_kwargs["models"] = args.models
 
     print(
-        f"Loading RAID: split={args.split}, max_samples={args.max_samples}, "
-        f"hf_repo={args.hf_repo}"
+        f"Loading RAID: split={args.split}, max_samples={args.max_samples}, hf_repo={args.hf_repo}"
     )
     try:
         dataset = load_dataset("raid", **ds_kwargs)
@@ -132,7 +164,9 @@ def main() -> None:
 
     evaluator = BenchmarkEvaluator(dataset)
     try:
-        evaluator.run_and_save(detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True)
+        evaluator.run_and_save(
+            detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True
+        )
         print(f"  results -> {out_path}")
     except Exception:
         print("  [ERROR] evaluation failed")

@@ -66,7 +66,8 @@ class RADARDetector(BaseTextDetector):
         logger.info("Loading RADAR model '%s' …", self.model_name)
         self._cls_tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self._cls_model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, num_labels=2,
+            self.model_name,
+            num_labels=2,
         ).to(self._device)
         self._cls_model.eval()
 

@@ -42,7 +42,9 @@ def _conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
 class _SAFEBottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes: int, planes: int, stride: int = 1, downsample: nn.Module | None = None) -> None:
+    def __init__(
+        self, inplanes: int, planes: int, stride: int = 1, downsample: nn.Module | None = None
+    ) -> None:
         super().__init__()
         self.conv1 = _conv1x1(inplanes, planes)
         self.bn1 = nn.BatchNorm2d(planes)
@@ -85,7 +87,9 @@ class _SAFEResNet(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-    def _make_layer(self, block: type[_SAFEBottleneck], planes: int, blocks: int, stride: int = 1) -> nn.Sequential:
+    def _make_layer(
+        self, block: type[_SAFEBottleneck], planes: int, blocks: int, stride: int = 1
+    ) -> nn.Sequential:
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
             downsample = nn.Sequential(
@@ -98,8 +102,11 @@ class _SAFEResNet(nn.Module):
         return nn.Sequential(*layers)
 
     @staticmethod
-    def _preprocess_dwt(x: torch.Tensor, mode: str = "symmetric", wave: str = "bior1.3") -> torch.Tensor:
+    def _preprocess_dwt(
+        x: torch.Tensor, mode: str = "symmetric", wave: str = "bior1.3"
+    ) -> torch.Tensor:
         from pytorch_wavelets import DWTForward
+
         dwt = DWTForward(J=1, mode=mode, wave=wave).to(x.device)
         _, yh = dwt(x)
         hp = yh[0][:, :, 2, :, :]
@@ -167,10 +174,12 @@ class SAFEDetector(BaseDetector):
         _load_safe_checkpoint(self._model, self._ckpt, self._device)
         self._model.to(self._device).eval()
 
-        self._transform = transforms.Compose([
-            transforms.CenterCrop(input_size),
-            transforms.ToTensor(),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.CenterCrop(input_size),
+                transforms.ToTensor(),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # Input handling
@@ -183,8 +192,7 @@ class SAFEDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

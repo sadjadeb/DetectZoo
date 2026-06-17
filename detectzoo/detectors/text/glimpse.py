@@ -58,9 +58,8 @@ def _geometric_estimate(
     lam = lam.clamp(min=1e-10, max=1.0 - 1e-10)
 
     tail_len = rank_size - K
-    exponents = torch.arange(1, tail_len + 1, device=top_k_probs.device,
-                             dtype=top_k_probs.dtype)
-    tail = p_K * (lam ** exponents)
+    exponents = torch.arange(1, tail_len + 1, device=top_k_probs.device, dtype=top_k_probs.dtype)
+    tail = p_K * (lam**exponents)
 
     full = torch.cat([top_k_probs, tail])
     return full / full.sum().clamp(min=1e-30)
@@ -91,8 +90,7 @@ class GlimpseDetector(BaseTextDetector):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(model_name=model_name, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(model_name=model_name, threshold=threshold, device=device, **kwargs)
         self.top_k = top_k
         self.rank_size = rank_size
         self.use_full_dist = use_full_dist
@@ -109,9 +107,9 @@ class GlimpseDetector(BaseTextDetector):
         log_probs_full = F.log_softmax(shift_logits, dim=-1)
 
         # Observed token log-probabilities
-        ll_observed = log_probs_full.gather(
-            2, shift_labels.unsqueeze(-1)
-        ).squeeze(-1).squeeze(0)  # [T]
+        ll_observed = (
+            log_probs_full.gather(2, shift_labels.unsqueeze(-1)).squeeze(-1).squeeze(0)
+        )  # [T]
 
         if self.use_full_dist:
             probs_full = F.softmax(shift_logits, dim=-1).squeeze(0)
@@ -126,7 +124,7 @@ class GlimpseDetector(BaseTextDetector):
             for t in range(T):
                 p_t = probs[t]
                 sorted_probs, _ = p_t.sort(descending=True)
-                top_k_probs = sorted_probs[:self.top_k]
+                top_k_probs = sorted_probs[: self.top_k]
 
                 est_dist = _geometric_estimate(top_k_probs, self.rank_size)
                 log_est = torch.log(est_dist.clamp(min=1e-30))

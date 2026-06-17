@@ -87,9 +87,8 @@ class FastDetectGPTDetector(BaseTextDetector):
         self._ref_tokenizer = AutoTokenizer.from_pretrained(self.reference_model_name)
         if self._ref_tokenizer.pad_token is None:
             self._ref_tokenizer.pad_token = self._ref_tokenizer.eos_token
-        self._ref_model = (
-            AutoModelForCausalLM.from_pretrained(self.reference_model_name)
-            .to(self._device)
+        self._ref_model = AutoModelForCausalLM.from_pretrained(self.reference_model_name).to(
+            self._device
         )
 
         self._ref_model.eval()
@@ -124,13 +123,12 @@ class FastDetectGPTDetector(BaseTextDetector):
         probs_ref = F.softmax(logits_ref, dim=-1)
 
         log_likelihood = lprobs_score.gather(dim=-1, index=labels).squeeze(-1)  # [1, T-1]
-        mean_ref = (probs_ref * lprobs_score).sum(dim=-1)                        # [1, T-1]
+        mean_ref = (probs_ref * lprobs_score).sum(dim=-1)  # [1, T-1]
         var_ref = (probs_ref * lprobs_score.square()).sum(dim=-1) - mean_ref.square()
 
-        discrepancy = (
-            (log_likelihood.sum(dim=-1) - mean_ref.sum(dim=-1))
-            / var_ref.sum(dim=-1).clamp(min=1e-10).sqrt()
-        )
+        discrepancy = (log_likelihood.sum(dim=-1) - mean_ref.sum(dim=-1)) / var_ref.sum(
+            dim=-1
+        ).clamp(min=1e-10).sqrt()
         return float(discrepancy.mean())
 
     # ------------------------------------------------------------------

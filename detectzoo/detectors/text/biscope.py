@@ -77,8 +77,7 @@ class BiScopeDetector(BaseTextDetector):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(model_name=model_name, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(model_name=model_name, threshold=threshold, device=device, **kwargs)
         self.summary_model_name = summary_model
         self.sample_clip = sample_clip
         self.n_segments = n_segments
@@ -94,7 +93,8 @@ class BiScopeDetector(BaseTextDetector):
 
         logger.info("Loading BiScope summary model '%s' …", self.summary_model_name)
         self._summary_tokenizer = AutoTokenizer.from_pretrained(
-            self.summary_model_name, padding_side="left",
+            self.summary_model_name,
+            padding_side="left",
         )
         if self._summary_tokenizer.pad_token is None:
             self._summary_tokenizer.pad_token = self._summary_tokenizer.eos_token
@@ -130,8 +130,10 @@ class BiScopeDetector(BaseTextDetector):
         """Generate a short title/summary for the text."""
         prompt = f"Write a title for this text: {text}\nJust output the title:"
         ids = self.summary_tokenizer(
-            prompt, return_tensors="pt",
-            max_length=self.sample_clip, truncation=True,
+            prompt,
+            return_tensors="pt",
+            max_length=self.sample_clip,
+            truncation=True,
         ).input_ids.to(self._device)
         ids = ids[:, 1:]  # remove start token
         trigger_len = ids.shape[1]
@@ -139,7 +141,8 @@ class BiScopeDetector(BaseTextDetector):
         config.max_new_tokens = 64
         attn = torch.ones_like(ids)
         out = self.summary_model.generate(
-            ids, attention_mask=attn,
+            ids,
+            attention_mask=attn,
             generation_config=config,
             pad_token_id=self.summary_tokenizer.pad_token_id,
         )[0]
@@ -160,7 +163,8 @@ class BiScopeDetector(BaseTextDetector):
 
     @torch.no_grad()
     def _compute_biscope_losses(
-        self, text: str,
+        self,
+        text: str,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute per-token FCE and BCE loss arrays on the text region.
 
@@ -170,12 +174,15 @@ class BiScopeDetector(BaseTextDetector):
         prompt_text = self._build_prompt(text)
 
         prompt_ids = self.tokenizer(
-            prompt_text, return_tensors="pt",
+            prompt_text,
+            return_tensors="pt",
         ).input_ids.to(self._device)
 
         text_ids = self.tokenizer(
-            text, return_tensors="pt",
-            max_length=self.sample_clip, truncation=True,
+            text,
+            return_tensors="pt",
+            max_length=self.sample_clip,
+            truncation=True,
         ).input_ids.to(self._device)
 
         combined_ids = torch.cat([prompt_ids, text_ids], dim=1)  # [1, P+T]
@@ -186,14 +193,14 @@ class BiScopeDetector(BaseTextDetector):
             return np.array([0.0]), np.array([0.0])
 
         logits = self.model(input_ids=combined_ids).logits  # [1, P+T, V]
-        targets = combined_ids[0, prompt_len:total_len]      # [T]
+        targets = combined_ids[0, prompt_len:total_len]  # [T]
 
         # FCE: logits at [prompt_len-1 .. total_len-2] predict targets [0..T-1]
         fce_logits = logits[0, prompt_len - 1 : total_len - 1, :]
         fce = F.cross_entropy(fce_logits, targets, reduction="none")
 
         # BCE: logits at [prompt_len .. total_len-1] predict targets [0..T-1]
-        bce_logits = logits[0, prompt_len : total_len, :]
+        bce_logits = logits[0, prompt_len:total_len, :]
         bce = F.cross_entropy(bce_logits, targets, reduction="none")
 
         return fce.cpu().numpy(), bce.cpu().numpy()
@@ -212,12 +219,18 @@ class BiScopeDetector(BaseTextDetector):
             if len(fce_suffix) == 0:
                 features.extend([0.0] * 8)
                 continue
-            features.extend([
-                float(np.mean(fce_suffix)), float(np.max(fce_suffix)),
-                float(np.min(fce_suffix)), float(np.std(fce_suffix)),
-                float(np.mean(bce_suffix)), float(np.max(bce_suffix)),
-                float(np.min(bce_suffix)), float(np.std(bce_suffix)),
-            ])
+            features.extend(
+                [
+                    float(np.mean(fce_suffix)),
+                    float(np.max(fce_suffix)),
+                    float(np.min(fce_suffix)),
+                    float(np.std(fce_suffix)),
+                    float(np.mean(bce_suffix)),
+                    float(np.max(bce_suffix)),
+                    float(np.min(bce_suffix)),
+                    float(np.std(bce_suffix)),
+                ]
+            )
         return np.array(features)
 
     def predict(self, input_data: Any) -> DetectionResult:

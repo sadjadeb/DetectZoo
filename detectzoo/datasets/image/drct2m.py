@@ -10,7 +10,7 @@ ModelScope dataset: ``BokingChen/DRCT-2M``
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Iterable, List, Sequence, Tuple
 
 from detectzoo.core.registry import register_dataset
 from detectzoo.datasets.base import BaseDataset, DatasetItem
@@ -43,7 +43,8 @@ class DRCT2MDataset(BaseDataset):
     Parameters
     ----------
     split : str, optional
-        If provided, look under ``<root>/<split>/`` first (common values: ``train``, ``val``, ``test``).
+        If provided, look under ``<root>/<split>/`` first (e.g. ``train``, ``val``,
+        ``test``).
         If omitted, scan the full dataset root for any ``0_real`` / ``1_fake`` pairs.
     root : str or Path, optional
         Download/extract location. When omitted, uses ``.detectzoo_data/drct2m/``.
@@ -98,7 +99,7 @@ class DRCT2MDataset(BaseDataset):
         for split_name, search_root in self._candidate_search_roots(base):
             if not search_root.exists():
                 continue
-                
+
             for root in _find_split_roots(search_root):
                 real_dir, fake_dir = root / "0_real", root / "1_fake"
                 rel = str(root.relative_to(base)) if root.is_relative_to(base) else str(root)
@@ -117,4 +118,3 @@ class DRCT2MDataset(BaseDataset):
                 return items
 
         return items
-

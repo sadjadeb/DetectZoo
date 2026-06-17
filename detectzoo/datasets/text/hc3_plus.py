@@ -18,8 +18,7 @@ from detectzoo.core.registry import register_dataset
 from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _GITHUB_RAW = (
-    "https://raw.githubusercontent.com/suu990901/"
-    "chatgpt-comparison-detection-HC3-Plus/main/data/en"
+    "https://raw.githubusercontent.com/suu990901/chatgpt-comparison-detection-HC3-Plus/main/data/en"
 )
 
 _FILES = (
@@ -124,11 +123,7 @@ class HC3PlusDataset(BaseDataset):
     def _files_to_load(self, data_dir: Path) -> list[tuple[Path, str]]:
         """Return ``(path, split_name)`` pairs to load."""
         if self.splits:
-            return [
-                (data_dir / self._SPLIT_MAP[s], s)
-                for s in self.splits
-                if s in self._SPLIT_MAP
-            ]
+            return [(data_dir / self._SPLIT_MAP[s], s) for s in self.splits if s in self._SPLIT_MAP]
         return [(data_dir / fname, sname) for sname, fname in self._SPLIT_MAP.items()]
 
     def _load_jsonl(self, fp: Path, split_name: str) -> List[DatasetItem]:
@@ -136,11 +131,13 @@ class HC3PlusDataset(BaseDataset):
         with open(fp, encoding="utf-8") as fh:
             for line in fh:
                 row: dict[str, Any] = json.loads(line)
-                items.append(DatasetItem(
-                    data=row["text"],
-                    label=int(row["label"]),
-                    metadata={"split": split_name},
-                ))
+                items.append(
+                    DatasetItem(
+                        data=row["text"],
+                        label=int(row["label"]),
+                        metadata={"split": split_name},
+                    )
+                )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

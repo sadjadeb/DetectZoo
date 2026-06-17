@@ -36,7 +36,9 @@ _CKPT_URL = "https://www.now61.com/f/95OefW/C2P_CLIP_release_20240901.zip"
 class _C2PCLIP(nn.Module):
     """CLIP ViT-L/14 visual encoder + single-logit linear head."""
 
-    def __init__(self, pretrained_name: str = "openai/clip-vit-large-patch14", num_classes: int = 1) -> None:
+    def __init__(
+        self, pretrained_name: str = "openai/clip-vit-large-patch14", num_classes: int = 1
+    ) -> None:
         super().__init__()
         from transformers import CLIPModel as HFCLIPModel
 
@@ -118,11 +120,13 @@ class C2PCLIPDetector(BaseDetector):
         self._model.load_state_dict(state, strict=True)
         self._model.to(self._device).eval()
 
-        self._transform = transforms.Compose([
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=_CLIP_MEAN, std=_CLIP_STD),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=_CLIP_MEAN, std=_CLIP_STD),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # Input handling
@@ -135,8 +139,7 @@ class C2PCLIPDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

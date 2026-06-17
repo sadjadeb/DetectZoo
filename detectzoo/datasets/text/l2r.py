@@ -156,9 +156,7 @@ class L2RDataset(BaseDataset):
         for name in requested:
             key = name.lower()
             if key not in lookup:
-                raise ValueError(
-                    f"Unknown L2R {kind} '{name}'. Valid: {list(valid)}"
-                )
+                raise ValueError(f"Unknown L2R {kind} '{name}'. Valid: {list(valid)}")
             resolved.append(lookup[key])
         return resolved
 

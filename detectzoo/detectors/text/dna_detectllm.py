@@ -78,15 +78,15 @@ class DNADetectLLMDetector(BaseTextDetector):
         if self._shared_tokenizer.pad_token is None:
             self._shared_tokenizer.pad_token = self._shared_tokenizer.eos_token
 
-        self._performer_model = AutoModelForCausalLM.from_pretrained(
-            self.performer_model_name
-        ).to(self._device)
+        self._performer_model = AutoModelForCausalLM.from_pretrained(self.performer_model_name).to(
+            self._device
+        )
         self._performer_model.eval()
 
         logger.info("Loading DNA-DetectLLM observer '%s' …", self.observer_model_name)
-        self._observer_model = AutoModelForCausalLM.from_pretrained(
-            self.observer_model_name
-        ).to(self._device)
+        self._observer_model = AutoModelForCausalLM.from_pretrained(self.observer_model_name).to(
+            self._device
+        )
         self._observer_model.eval()
 
         self._model = self._performer_model

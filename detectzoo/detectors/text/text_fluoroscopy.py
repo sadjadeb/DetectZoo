@@ -68,9 +68,7 @@ class _BinaryClassifier(nn.Module):
 # ------------------------------------------------------------------
 
 
-def _last_token_pool(
-    hidden_states: torch.Tensor, attention_mask: torch.Tensor
-) -> torch.Tensor:
+def _last_token_pool(hidden_states: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
     """Pool the last non-padding token from *hidden_states*."""
     left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
     if left_padding:
@@ -155,7 +153,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
 
         logger.info("Loading Text Fluoroscopy encoder '%s' …", self.model_name)
         self._tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name, trust_remote_code=True,
+            self.model_name,
+            trust_remote_code=True,
         )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
@@ -170,7 +169,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
             load_kwargs["low_cpu_mem_usage"] = True
 
         self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_name, **load_kwargs,
+            self.model_name,
+            **load_kwargs,
         )
         if self._device.type != "cuda":
             self._model.to(self._device)
@@ -198,7 +198,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
 
     @torch.no_grad()
     def _forward_hidden(
-        self, text: str,
+        self,
+        text: str,
     ) -> tuple[tuple[torch.Tensor, ...], torch.Tensor]:
         """Tokenise *text*, run the encoder, and return (hidden_states, attention_mask).
 
@@ -219,7 +220,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
 
     @torch.no_grad()
     def _compute_kl_divergences(
-        self, hidden_states: tuple[torch.Tensor, ...],
+        self,
+        hidden_states: tuple[torch.Tensor, ...],
     ) -> list[float]:
         """KL(middle‖first) + KL(middle‖last) for each middle layer.
 
@@ -232,10 +234,12 @@ class TextFluoroscopyDetector(BaseTextDetector):
         vocab_head = _get_vocab_head(self.model)
 
         first_probs = F.softmax(
-            vocab_head(hidden_states[0]).squeeze(0).float(), dim=-1,
+            vocab_head(hidden_states[0]).squeeze(0).float(),
+            dim=-1,
         )
         last_probs = F.softmax(
-            vocab_head(hidden_states[-1]).squeeze(0).float(), dim=-1,
+            vocab_head(hidden_states[-1]).squeeze(0).float(),
+            dim=-1,
         )
 
         kls: list[float] = []
@@ -254,7 +258,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
         return kls
 
     def _select_layer(
-        self, hidden_states: tuple[torch.Tensor, ...],
+        self,
+        hidden_states: tuple[torch.Tensor, ...],
     ) -> tuple[int, list[float]]:
         """Return ``(layer_index, kl_values)``.
 
@@ -270,7 +275,8 @@ class TextFluoroscopyDetector(BaseTextDetector):
 
     @torch.no_grad()
     def _extract_features(
-        self, text: str,
+        self,
+        text: str,
     ) -> tuple[torch.Tensor, dict[str, Any]]:
         """Extract the intrinsic-layer embedding and metadata for *text*."""
         hidden_states, attention_mask = self._forward_hidden(text)

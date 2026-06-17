@@ -33,10 +33,7 @@ from detectzoo.datasets._download import download_file, get_cache_dir
 # ---------------------------------------------------------------------------
 # Constants — taken from official Res-TSSDNet checkpoint / upstream ``models.py``
 # ---------------------------------------------------------------------------
-_CKPT_FILE = (
-    "Res_TSSDNet_time_frame_61_ASVspoof2019_LA_"
-    "Loss_0.0017_dEER_0.74%_eEER_1.64%.pth"
-)
+_CKPT_FILE = "Res_TSSDNet_time_frame_61_ASVspoof2019_LA_Loss_0.0017_dEER_0.74%_eEER_1.64%.pth"
 _CKPT_URL = (
     "https://github.com/ghua-ac/end-to-end-synthetic-speech-detection/raw/"
     "main/pretrained/" + quote(_CKPT_FILE)
@@ -59,7 +56,7 @@ _NB_CLASSES = 2
 class _RSM1D(nn.Module):
     def __init__(self, channels_in: int, channels_out: int) -> None:
         super().__init__()
-        self.conv1 = nn.Conv1d(channels_in,  channels_out, kernel_size=3, padding=1, bias=False)
+        self.conv1 = nn.Conv1d(channels_in, channels_out, kernel_size=3, padding=1, bias=False)
         self.conv2 = nn.Conv1d(channels_out, channels_out, kernel_size=3, padding=1, bias=False)
         self.conv3 = nn.Conv1d(channels_out, channels_out, kernel_size=3, padding=1, bias=False)
         self.bn1 = nn.BatchNorm1d(channels_out)
@@ -114,18 +111,22 @@ class _ResTSSDNet(nn.Module):
 # Audio helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_audio(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> torch.Tensor:
     try:
         import torchaudio
+
         wav, sr = torchaudio.load(str(path))
         if sr != target_sr:
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     except Exception:
         import soundfile as sf
+
         data, sr = sf.read(str(path), always_2d=True)
         wav = torch.from_numpy(data.T.astype(np.float32))
         if sr != target_sr:
             import torchaudio
+
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)
@@ -142,6 +143,7 @@ def _pad_or_trim(wav: torch.Tensor, length: int) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # DetectZoo detector wrapper
 # ---------------------------------------------------------------------------
+
 
 @register_detector("res_tssdnet", aliases=["restssdnet", "tssdnet"])
 class ResTSSDNetDetector(BaseDetector):
@@ -198,9 +200,7 @@ class ResTSSDNetDetector(BaseDetector):
         self._model.to(self._device).eval()
 
     def _load_weights(self) -> None:
-        state = torch.load(
-            self._weight_path, map_location="cpu", weights_only=False
-        )
+        state = torch.load(self._weight_path, map_location="cpu", weights_only=False)
         if isinstance(state, dict):
             for key in ("model_state_dict", "state_dict", "model"):
                 if key in state:

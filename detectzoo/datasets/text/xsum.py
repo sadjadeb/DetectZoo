@@ -109,16 +109,18 @@ class XSumDataset(BaseDataset):
         ds = load_dataset("EdinburghNLP/xsum", split=self.split)
         items: List[DatasetItem] = []
         for row in ds:
-            items.append(DatasetItem(
-                data=row[self.text_field],
-                label=0,
-                metadata={
-                    "source": "human",
-                    "id": row.get("id", ""),
-                    "document": row.get("document", ""),
-                    "summary": row.get("summary", ""),
-                },
-            ))
+            items.append(
+                DatasetItem(
+                    data=row[self.text_field],
+                    label=0,
+                    metadata={
+                        "source": "human",
+                        "id": row.get("id", ""),
+                        "document": row.get("document", ""),
+                        "summary": row.get("summary", ""),
+                    },
+                )
+            )
             if self.max_samples and len(items) >= self.max_samples:
                 break
         return items
@@ -133,16 +135,18 @@ class XSumDataset(BaseDataset):
             with open(fp, encoding="utf-8") as fh:
                 for line in fh:
                     row: dict[str, Any] = json.loads(line)
-                    items.append(DatasetItem(
-                        data=row.get(self.text_field, row.get("summary", "")),
-                        label=int(row.get("label", 0)),
-                        metadata={
-                            "source": row.get("source", "human"),
-                            "id": row.get("id", ""),
-                            "document": row.get("document", ""),
-                            "summary": row.get("summary", ""),
-                        },
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=row.get(self.text_field, row.get("summary", "")),
+                            label=int(row.get("label", 0)),
+                            metadata={
+                                "source": row.get("source", "human"),
+                                "id": row.get("id", ""),
+                                "document": row.get("document", ""),
+                                "summary": row.get("summary", ""),
+                            },
+                        )
+                    )
                     if self.max_samples and len(items) >= self.max_samples:
                         return items
         return items

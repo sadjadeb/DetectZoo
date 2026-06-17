@@ -92,8 +92,7 @@ class CNNSpotDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

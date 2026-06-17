@@ -33,7 +33,9 @@ from detectzoo.utils.io import load_image
 _IMAGENET = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 
 _DEFAULT_CKPT_NAME = "14_acc0.9996.pth"
-_DEFAULT_CKPT_IN_ZIP = "pretrained/DRCT-2M/sdv14/convnext_base_in22k_224_drct_amp_crop/14_acc0.9996.pth"
+_DEFAULT_CKPT_IN_ZIP = (
+    "pretrained/DRCT-2M/sdv14/convnext_base_in22k_224_drct_amp_crop/14_acc0.9996.pth"
+)
 _PRETRAINED_ZIP_URL = (
     "https://modelscope.cn/datasets/BokingChen/DRCT-2M/resolve/master/pretrained.zip"
 )
@@ -47,6 +49,7 @@ class _DRCTContrastiveModel(nn.Module):
     def __init__(self, embedding_size: int = 1024) -> None:
         super().__init__()
         import timm
+
         backbone = timm.create_model("convnext_base_in22k", pretrained=False)
 
         in_features = backbone.head.fc.in_features
@@ -112,12 +115,14 @@ class DRCTDetector(BaseDetector):
         self._model.load_state_dict(state, strict=True)
         self._model.to(self._device).eval()
 
-        self._transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(**_IMAGENET),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(**_IMAGENET),
+            ]
+        )
 
     def _ensure_download(self, cache: Path) -> None:
         zip_path = cache / _PRETRAINED_ZIP_NAME

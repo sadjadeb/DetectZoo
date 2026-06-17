@@ -18,7 +18,7 @@ from __future__ import annotations
 import math
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Tuple, Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -54,7 +54,9 @@ class _QuickGELU(nn.Module):
 class _ForgeryAwareAdapter(nn.Module):
     """Spatial conv-bottleneck + DWT frequency-aware attention."""
 
-    def __init__(self, d_model: int = 1024, bottleneck: int = 64, dropout: float = 0.1, head: int = 8) -> None:
+    def __init__(
+        self, d_model: int = 1024, bottleneck: int = 64, dropout: float = 0.1, head: int = 8
+    ) -> None:
         super().__init__()
         self.d_model = d_model
         self.scale = 0.1
@@ -66,6 +68,7 @@ class _ForgeryAwareAdapter(nn.Module):
 
         self.freq_scale = nn.Parameter(torch.zeros(1))
         from pytorch_wavelets import DWTForward, DWTInverse
+
         self.dwt_transform = DWTForward(J=1, wave="haar")
         self.idwt_transform = DWTInverse(wave="haar")
 
@@ -85,16 +88,22 @@ class _ForgeryAwareAdapter(nn.Module):
         self.norm3 = nn.LayerNorm(d_model)
 
     def _ffn(self, tgt: torch.Tensor) -> torch.Tensor:
-        return self.norm3(tgt + self.dropout4(self.linear2(self.dropout3(self.activation(self.linear1(tgt))))))
+        return self.norm3(
+            tgt + self.dropout4(self.linear2(self.dropout3(self.activation(self.linear1(tgt)))))
+        )
 
     def _freq(self, x: torch.Tensor) -> torch.Tensor:
         B, C = x.shape[:2]
         nq = x.shape[2]
         q = k = v = x.transpose(0, 1).flatten(1, 2)
-        x = x + self.dropout_intra(self.intra_band(q, k, v)[0].reshape(C, B, nq, self.d_model).transpose(0, 1))
+        x = x + self.dropout_intra(
+            self.intra_band(q, k, v)[0].reshape(C, B, nq, self.d_model).transpose(0, 1)
+        )
         x = self.norm_intra(x)
         q = k = v = x.flatten(0, 1).transpose(0, 1)
-        x = x + self.dropout_inter(self.inter_band(q, k, v)[0].transpose(0, 1).reshape(B, C, nq, self.d_model))
+        x = x + self.dropout_inter(
+            self.inter_band(q, k, v)[0].transpose(0, 1).reshape(B, C, nq, self.d_model)
+        )
         x = self.norm_inter(x)
         return self._ffn(x)
 
@@ -111,34 +120,74 @@ class _ForgeryAwareAdapter(nn.Module):
         freq_out = torch.cat([torch.zeros_like(x[:1]), freq_out], dim=0)
 
         down = self.non_linear_func(self.first_conv_layer(x.permute(1, 2, 0)))
-        up = F.dropout(self.second_conv_layer(down), p=self.dropout, training=self.training).permute(2, 0, 1) * self.scale
+        up = (
+            F.dropout(self.second_conv_layer(down), p=self.dropout, training=self.training).permute(
+                2, 0, 1
+            )
+            * self.scale
+        )
         return up + freq_out * self.freq_scale
 
 
 class _ResidualAttentionBlock(nn.Module):
-    def __init__(self, d_model: int, n_head: int, attn_mask: torch.Tensor | None = None, add_adapter: bool = False) -> None:
+    def __init__(
+        self,
+        d_model: int,
+        n_head: int,
+        attn_mask: torch.Tensor | None = None,
+        add_adapter: bool = False,
+    ) -> None:
         super().__init__()
         self.attn = nn.MultiheadAttention(d_model, n_head)
         self.ln_1 = _LayerNorm(d_model)
-        self.mlp = nn.Sequential(OrderedDict([("c_fc", nn.Linear(d_model, d_model * 4)), ("gelu", _QuickGELU()), ("c_proj", nn.Linear(d_model * 4, d_model))]))
+        self.mlp = nn.Sequential(
+            OrderedDict(
+                [
+                    ("c_fc", nn.Linear(d_model, d_model * 4)),
+                    ("gelu", _QuickGELU()),
+                    ("c_proj", nn.Linear(d_model * 4, d_model)),
+                ]
+            )
+        )
         self.ln_2 = _LayerNorm(d_model)
         self.attn_mask = attn_mask
         self.forgery_aware_adapter = _ForgeryAwareAdapter(d_model) if add_adapter else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
-        x = x + self.attn(self.ln_1(x), self.ln_1(x), self.ln_1(x), need_weights=False, attn_mask=mask)[0]
+        mask = (
+            self.attn_mask.to(dtype=x.dtype, device=x.device)
+            if self.attn_mask is not None
+            else None
+        )
+        x = (
+            x
+            + self.attn(
+                self.ln_1(x), self.ln_1(x), self.ln_1(x), need_weights=False, attn_mask=mask
+            )[0]
+        )
         adapt = self.forgery_aware_adapter(x) if self.forgery_aware_adapter is not None else 0
         x = x + self.mlp(self.ln_2(x)) + adapt
         return x
 
 
 class _Transformer(nn.Module):
-    def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor | None = None, add_adapter: list[bool] | None = None) -> None:
+    def __init__(
+        self,
+        width: int,
+        layers: int,
+        heads: int,
+        attn_mask: torch.Tensor | None = None,
+        add_adapter: list[bool] | None = None,
+    ) -> None:
         super().__init__()
         if add_adapter is None:
             add_adapter = [False] * layers
-        self.resblocks = nn.Sequential(*[_ResidualAttentionBlock(width, heads, attn_mask, add_adapter[i]) for i in range(layers)])
+        self.resblocks = nn.Sequential(
+            *[
+                _ResidualAttentionBlock(width, heads, attn_mask, add_adapter[i])
+                for i in range(layers)
+            ]
+        )
 
     def forward(self, x: torch.Tensor) -> tuple[dict, torch.Tensor]:
         out: dict[str, torch.Tensor] = {}
@@ -149,12 +198,23 @@ class _Transformer(nn.Module):
 
 
 class _VisionTransformer(nn.Module):
-    def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int, num_adapter: int = 3) -> None:
+    def __init__(
+        self,
+        input_resolution: int,
+        patch_size: int,
+        width: int,
+        layers: int,
+        heads: int,
+        output_dim: int,
+        num_adapter: int = 3,
+    ) -> None:
         super().__init__()
         self.conv1 = nn.Conv2d(3, width, patch_size, stride=patch_size, bias=False)
-        scale = width ** -0.5
+        scale = width**-0.5
         self.class_embedding = nn.Parameter(scale * torch.randn(width))
-        self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
+        self.positional_embedding = nn.Parameter(
+            scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width)
+        )
         self.ln_pre = _LayerNorm(width)
 
         adapt_flags = [False] * layers
@@ -168,7 +228,14 @@ class _VisionTransformer(nn.Module):
 
     def forward(self, x: torch.Tensor, return_full: bool = False) -> torch.Tensor:
         x = self.conv1(x).flatten(2).permute(0, 2, 1)
-        x = torch.cat([self.class_embedding + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device), x], dim=1)
+        x = torch.cat(
+            [
+                self.class_embedding
+                + torch.zeros(x.shape[0], 1, x.shape[-1], dtype=x.dtype, device=x.device),
+                x,
+            ],
+            dim=1,
+        )
         x = self.ln_pre(x + self.positional_embedding.to(x.dtype))
         x = x.permute(1, 0, 2)
         _, x = self.transformer(x)
@@ -180,15 +247,36 @@ class _VisionTransformer(nn.Module):
 
 
 class _CLIP(nn.Module):
-    def __init__(self, embed_dim: int, image_resolution: int, vision_layers: int, vision_width: int, vision_patch_size: int,
-                 context_length: int, vocab_size: int, transformer_width: int, transformer_heads: int, transformer_layers: int,
-                 num_adapter: int = 3) -> None:
+    def __init__(
+        self,
+        embed_dim: int,
+        image_resolution: int,
+        vision_layers: int,
+        vision_width: int,
+        vision_patch_size: int,
+        context_length: int,
+        vocab_size: int,
+        transformer_width: int,
+        transformer_heads: int,
+        transformer_layers: int,
+        num_adapter: int = 3,
+    ) -> None:
         super().__init__()
         self.context_length = context_length
         vision_heads = vision_width // 64
-        self.visual = _VisionTransformer(image_resolution, vision_patch_size, vision_width, vision_layers, vision_heads, embed_dim, num_adapter)
+        self.visual = _VisionTransformer(
+            image_resolution,
+            vision_patch_size,
+            vision_width,
+            vision_layers,
+            vision_heads,
+            embed_dim,
+            num_adapter,
+        )
         mask = torch.empty(context_length, context_length).fill_(float("-inf")).triu_(1)
-        self.transformer = _Transformer(transformer_width, transformer_layers, transformer_heads, attn_mask=mask)
+        self.transformer = _Transformer(
+            transformer_width, transformer_layers, transformer_heads, attn_mask=mask
+        )
         self.vocab_size = vocab_size
         self.token_embedding = nn.Embedding(vocab_size, transformer_width)
         self.positional_embedding = nn.Parameter(torch.empty(context_length, transformer_width))
@@ -232,13 +320,14 @@ class _LanguageGuidedAlignment(nn.Module):
         self.ctx = nn.Parameter(ctx_vectors)
 
         import open_clip as _oc
+
         prompt_prefix = " ".join(["X"] * n_ctx)
         prompts = [prompt_prefix + " " + name + "." for name in classnames]
         tokenized_prompts = torch.cat([_oc.tokenize(p) for p in prompts])
         with torch.no_grad():
             embedding = clip.token_embedding(tokenized_prompts).type(dtype)
         self.register_buffer("token_prefix", embedding[:, :1, :])
-        self.register_buffer("token_suffix", embedding[:, 1 + n_ctx:, :])
+        self.register_buffer("token_suffix", embedding[:, 1 + n_ctx :, :])
         self.n_cls = len(classnames)
         self.n_ctx = n_ctx
         self.tokenized_prompts = tokenized_prompts
@@ -255,7 +344,12 @@ class _LanguageGuidedAlignment(nn.Module):
 
     def forward(self, im_features: torch.Tensor) -> torch.Tensor:
         tgt = self.ctx[:, None].repeat_interleave(im_features.shape[0], dim=1)
-        tgt = self.norm1(tgt + self.patch_basaed_enhancer(tgt, im_features.transpose(0, 1), im_features.transpose(0, 1))[0])
+        tgt = self.norm1(
+            tgt
+            + self.patch_basaed_enhancer(
+                tgt, im_features.transpose(0, 1), im_features.transpose(0, 1)
+            )[0]
+        )
         tgt = self._ffn(tgt).transpose(0, 1)
         prompts = []
         for ctx_i in tgt:
@@ -271,12 +365,21 @@ class _FatFormerModel(nn.Module):
         super().__init__()
         # ViT-L/14 configuration
         self.clip_model = _CLIP(
-            embed_dim=768, image_resolution=224, vision_layers=24, vision_width=1024,
-            vision_patch_size=14, context_length=77, vocab_size=49408,
-            transformer_width=768, transformer_heads=12, transformer_layers=12,
+            embed_dim=768,
+            image_resolution=224,
+            vision_layers=24,
+            vision_width=1024,
+            vision_patch_size=14,
+            context_length=77,
+            vocab_size=49408,
+            transformer_width=768,
+            transformer_heads=12,
+            transformer_layers=12,
             num_adapter=num_adapter,
         )
-        self.language_guided_alignment = _LanguageGuidedAlignment(self.clip_model, ["real", "fake"], n_ctx)
+        self.language_guided_alignment = _LanguageGuidedAlignment(
+            self.clip_model, ["real", "fake"], n_ctx
+        )
         self.tokenized_prompts = self.language_guided_alignment.tokenized_prompts
         self.image_encoder = self.clip_model.visual
         self.text_encoder = _TextEncoder(self.clip_model)
@@ -322,7 +425,9 @@ class _FatFormerModel(nn.Module):
         aug_feats = tgt.transpose(0, 1).mean(dim=1)
         aug_feats = aug_feats / aug_feats.norm(dim=-1, keepdim=True)
         tf_n = text_feats / text_feats.norm(dim=-1, keepdim=True)
-        aug_logits = torch.stack([logit_scale * af @ tfn.t() for af, tfn in zip(aug_feats, tf_n.transpose(0, 1))])
+        aug_logits = torch.stack(
+            [logit_scale * af @ tfn.t() for af, tfn in zip(aug_feats, tf_n.transpose(0, 1))]
+        )
         return logits + aug_logits
 
 
@@ -369,6 +474,7 @@ class FatFormerDetector(BaseDetector):
             self._ckpt = cache / _DEFAULT_CKPT_NAME
             if not self._ckpt.is_file():
                 import gdown
+
                 gdown.download(id=_GDRIVE_FILE_ID, output=str(self._ckpt), quiet=False)
 
         self._model = _FatFormerModel(num_adapter=num_vit_adapter, n_ctx=num_context_embedding)
@@ -377,12 +483,14 @@ class FatFormerDetector(BaseDetector):
         self._model.load_state_dict(state, strict=False)
         self._model.to(self._device).eval()
 
-        self._transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(**_IMAGENET),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(**_IMAGENET),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # Input handling
@@ -395,8 +503,7 @@ class FatFormerDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

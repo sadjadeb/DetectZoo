@@ -34,6 +34,7 @@ logger = get_logger(__name__)
 def _unigram_probs(tokens: List[str]) -> np.ndarray:
     """Cheap unigram probability proxy based on token frequency."""
     from collections import Counter
+
     if not tokens:
         return np.array([1.0])
     counts = Counter(tokens)
@@ -84,9 +85,9 @@ class GhostbusterDetector(BaseTextDetector):
         self._large_tokenizer = AutoTokenizer.from_pretrained(self.large_model_name)
         if self._large_tokenizer.pad_token is None:
             self._large_tokenizer.pad_token = self._large_tokenizer.eos_token
-        self._large_model = AutoModelForCausalLM.from_pretrained(
-            self.large_model_name
-        ).to(self._device)
+        self._large_model = AutoModelForCausalLM.from_pretrained(self.large_model_name).to(
+            self._device
+        )
         self._large_model.eval()
 
     @property
@@ -108,7 +109,9 @@ class GhostbusterDetector(BaseTextDetector):
         tok = self.large_tokenizer if use_large else self.tokenizer
 
         enc = tok(
-            text, return_tensors="pt", truncation=True,
+            text,
+            return_tensors="pt",
+            truncation=True,
             max_length=self.max_length,
         ).to(self._device)
         logits = model(**enc).logits
@@ -158,7 +161,7 @@ class GhostbusterDetector(BaseTextDetector):
         # Handcrafted features from the paper
         diff = l_ - s
         sorted_diff = np.sort(diff)[::-1]
-        features.append(np.mean(sorted_diff[:min(25, len(sorted_diff))]))
+        features.append(np.mean(sorted_diff[: min(25, len(sorted_diff))]))
         if len(sorted_diff) > 25:
             features.append(np.mean(sorted_diff[25:50]))
         else:
@@ -168,7 +171,7 @@ class GhostbusterDetector(BaseTextDetector):
         features.append(float(np.sum(l_ > 0.95)))
         # Mean of top-25 large probs
         sorted_l = np.sort(l_)[::-1]
-        features.append(np.mean(sorted_l[:min(25, len(sorted_l))]))
+        features.append(np.mean(sorted_l[: min(25, len(sorted_l))]))
         if len(sorted_l) > 25:
             features.append(np.mean(sorted_l[25:50]))
         else:

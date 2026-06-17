@@ -62,9 +62,9 @@ class GECScoreDetector(BaseTextDetector):
 
         logger.info("Loading GEC model '%s' …", self.gec_model_name)
         self._gec_tokenizer = AutoTokenizer.from_pretrained(self.gec_model_name)
-        self._gec_model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.gec_model_name
-        ).to(self._device)
+        self._gec_model = AutoModelForSeq2SeqLM.from_pretrained(self.gec_model_name).to(
+            self._device
+        )
         self._gec_model.eval()
 
     @property

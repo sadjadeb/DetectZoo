@@ -87,6 +87,7 @@ _HIDDEN_SIZE = 1024
 # Detector wrapper
 # ---------------------------------------------------------------------------
 
+
 @register_detector(
     "anti_deepfake_wav2vec",
     aliases=["anti_deepfake", "nii_wav2vec"],
@@ -177,9 +178,7 @@ class AntiDeepfakeWav2VecDetector(BaseDetector):
             average pool collapses the time axis).
         """
         wav = self._normalize_input(input_data)
-        score_ai, score_human, logits = run_inference(
-            self._model, wav, self._device
-        )
+        score_ai, score_human, logits = run_inference(self._model, wav, self._device)
 
         return self._make_result(
             score_ai,

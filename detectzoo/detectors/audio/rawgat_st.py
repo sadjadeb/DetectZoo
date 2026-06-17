@@ -57,11 +57,11 @@ _CKPT_NAMES = {
 }
 
 _SAMPLE_RATE = 16_000
-_MAX_SAMPLES = 64_600       # ``nb_samp`` in the upstream config (~4 s)
+_MAX_SAMPLES = 64_600  # ``nb_samp`` in the upstream config (~4 s)
 
-_OUT_CHANNELS = 70          # sinc filters
-_FIRST_CONV   = 128         # sinc kernel size (becomes 129 after odd-fix)
-_FILTS        = [32, [32, 32], [32, 64], [64, 64]]
+_OUT_CHANNELS = 70  # sinc filters
+_FIRST_CONV = 128  # sinc kernel size (becomes 129 after odd-fix)
+_FILTS = [32, [32, 32], [32, 64], [64, 64]]
 
 
 # ---------------------------------------------------------------------------
@@ -111,7 +111,7 @@ class _SincConv(nn.Module):
             fmin = float(self.mel[i])
             fmax = float(self.mel[i + 1])
             h_high = (2 * fmax / sr) * torch.sinc(2 * fmax * hsupp / sr)
-            h_low  = (2 * fmin / sr) * torch.sinc(2 * fmin * hsupp / sr)
+            h_low = (2 * fmin / sr) * torch.sinc(2 * fmin * hsupp / sr)
             filters[i] = hamming * (h_high - h_low)
         filters = filters.view(self.out_channels, 1, self.kernel_size)
         return F.conv1d(x, filters, stride=1, padding=0, bias=None)
@@ -128,24 +128,36 @@ class _ResidualBlock(nn.Module):
         if not first:
             self.bn1 = nn.BatchNorm2d(nb_filts[0])
         self.conv1 = nn.Conv2d(
-            nb_filts[0], nb_filts[1],
-            kernel_size=(2, 3), padding=(1, 1), stride=1,
+            nb_filts[0],
+            nb_filts[1],
+            kernel_size=(2, 3),
+            padding=(1, 1),
+            stride=1,
         )
         self.conv_1 = nn.Conv2d(
-            1, nb_filts[1],
-            kernel_size=(2, 3), padding=(1, 1), stride=1,
+            1,
+            nb_filts[1],
+            kernel_size=(2, 3),
+            padding=(1, 1),
+            stride=1,
         )
         self.bn2 = nn.BatchNorm2d(nb_filts[1])
         self.conv2 = nn.Conv2d(
-            nb_filts[1], nb_filts[1],
-            kernel_size=(2, 3), padding=(0, 1), stride=1,
+            nb_filts[1],
+            nb_filts[1],
+            kernel_size=(2, 3),
+            padding=(0, 1),
+            stride=1,
         )
         self.selu = nn.SELU(inplace=True)
         if nb_filts[0] != nb_filts[1]:
             self.downsample = True
             self.conv_downsample = nn.Conv2d(
-                nb_filts[0], nb_filts[1],
-                kernel_size=(1, 3), padding=(0, 1), stride=1,
+                nb_filts[0],
+                nb_filts[1],
+                kernel_size=(1, 3),
+                padding=(0, 1),
+                stride=1,
             )
         else:
             self.downsample = False
@@ -176,7 +188,7 @@ class _GraphAttentionLayer(nn.Module):
         self.att_proj = nn.Linear(in_dim, out_dim)
         self.att_weight = nn.Parameter(torch.empty(out_dim, 1))
         nn.init.xavier_normal_(self.att_weight)
-        self.proj_with_att    = nn.Linear(in_dim, out_dim)
+        self.proj_with_att = nn.Linear(in_dim, out_dim)
         self.proj_without_att = nn.Linear(in_dim, out_dim)
         self.bn = nn.BatchNorm1d(out_dim)
         self.input_drop = nn.Dropout(p=0.2)
@@ -219,15 +231,15 @@ class _GraphPool(nn.Module):
         """Return ``(B, k, 1, D)`` — the extra singleton dim matches upstream
         ``Pool``'s indexing so ``transpose(1, 3)`` in the outer net works."""
         z = self.drop(h)
-        scores = self.sigmoid(self.proj(z))           # (B, N, 1)
+        scores = self.sigmoid(self.proj(z))  # (B, N, 1)
         num_nodes = h.size(1)
         k = max(2, int(self.k * num_nodes))
-        _, idx = torch.topk(scores, k, dim=1)         # (B, k, 1)
-        weighted = h * scores                         # (B, N, D)
+        _, idx = torch.topk(scores, k, dim=1)  # (B, k, 1)
+        weighted = h * scores  # (B, N, D)
         picked = []
         for i in range(h.size(0)):
-            picked.append(weighted[i, idx[i], :])     # (k, 1, D)
-        return torch.stack(picked, dim=0)             # (B, k, 1, D)
+            picked.append(weighted[i, idx[i], :])  # (k, 1, D)
+        return torch.stack(picked, dim=0)  # (B, k, 1, D)
 
 
 # ---------------------------------------------------------------------------
@@ -260,6 +272,7 @@ class _RawGATST(nn.Module):
                 nn.Sequential(_ResidualBlock(_FILTS[3])),
                 nn.Sequential(_ResidualBlock(_FILTS[3])),
             )
+
         self.encoder1 = _mk_encoder()
         self.encoder2 = _mk_encoder()
 
@@ -283,47 +296,51 @@ class _RawGATST(nn.Module):
         b, t = x.shape
         x = x.view(b, 1, t)
         x = self.conv_time(x)
-        x = x.unsqueeze(1)                      # (B, 1, 70, T')
+        x = x.unsqueeze(1)  # (B, 1, 70, T')
         x = F.max_pool2d(torch.abs(x), (3, 3))  # (B, 1, 23, T'')
         x = self.selu(self.first_bn(x))
 
-        e1 = self.encoder1(x)                   # (B, 64, 23, 29)
-        s_max, _ = torch.max(torch.abs(e1), dim=3)           # (B, 64, 23)
-        g1 = self.GAT_layer1(s_max.transpose(1, 2))          # (B, 23, 32)
+        e1 = self.encoder1(x)  # (B, 64, 23, 29)
+        s_max, _ = torch.max(torch.abs(e1), dim=3)  # (B, 64, 23)
+        g1 = self.GAT_layer1(s_max.transpose(1, 2))  # (B, 23, 32)
         p1 = self.pool1(g1)
         o1 = self.proj1(p1.transpose(1, 3))
-        o1 = o1.view(o1.size(0), o1.size(1), o1.size(3))     # (B, 32, 12)
+        o1 = o1.view(o1.size(0), o1.size(1), o1.size(3))  # (B, 32, 12)
 
         e2 = self.encoder2(x)
-        t_max, _ = torch.max(torch.abs(e2), dim=2)           # (B, 64, 29)
-        g2 = self.GAT_layer2(t_max.transpose(1, 2))          # (B, 29, 32)
+        t_max, _ = torch.max(torch.abs(e2), dim=2)  # (B, 64, 29)
+        g2 = self.GAT_layer2(t_max.transpose(1, 2))  # (B, 29, 32)
         p2 = self.pool2(g2)
         o2 = self.proj2(p2.transpose(1, 3))
-        o2 = o2.view(o2.size(0), o2.size(1), o2.size(3))     # (B, 32, 12)
+        o2 = o2.view(o2.size(0), o2.size(1), o2.size(3))  # (B, 32, 12)
 
         fused = torch.mul(o1, o2) if self._fusion == "mul" else (o1 + o2)
-        g3 = self.GAT_layer3(fused.transpose(1, 2))          # (B, 12, 16)
+        g3 = self.GAT_layer3(fused.transpose(1, 2))  # (B, 12, 16)
         p3 = self.pool3(g3)
-        nodes = self.proj(p3).flatten(1)                     # (B, 7)
-        return self.proj_node(nodes)                         # (B, 2)
+        nodes = self.proj(p3).flatten(1)  # (B, 7)
+        return self.proj_node(nodes)  # (B, 2)
 
 
 # ---------------------------------------------------------------------------
 # Audio helpers (shared style with rawnet2.py)
 # ---------------------------------------------------------------------------
 
+
 def _load_audio(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> torch.Tensor:
     try:
         import torchaudio
+
         wav, sr = torchaudio.load(str(path))
         if sr != target_sr:
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     except Exception:
         import soundfile as sf
+
         data, sr = sf.read(str(path), always_2d=True)
         wav = torch.from_numpy(data.T.astype(np.float32))
         if sr != target_sr:
             import torchaudio
+
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)
@@ -340,6 +357,7 @@ def _pad_or_trim(wav: torch.Tensor, length: int) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # DetectZoo detector wrapper
 # ---------------------------------------------------------------------------
+
 
 @register_detector("rawgat_st", aliases=["rawgat", "rawgatst"])
 class RawGATSTDetector(BaseDetector):
@@ -403,9 +421,7 @@ class RawGATSTDetector(BaseDetector):
         self._model.to(self._device).eval()
 
     def _load_weights(self) -> None:
-        state = torch.load(
-            self._weight_path, map_location="cpu", weights_only=False
-        )
+        state = torch.load(self._weight_path, map_location="cpu", weights_only=False)
         if isinstance(state, dict):
             for key in ("model_state_dict", "state_dict", "model"):
                 if key in state:

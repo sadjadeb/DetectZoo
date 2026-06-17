@@ -35,19 +35,19 @@ from detectzoo.datasets._download import download_file, get_cache_dir
 # ---------------------------------------------------------------------------
 # Constants — dims verified from official pretrained checkpoint
 # ---------------------------------------------------------------------------
-_CKPT_URL  = "https://www.asvspoof.org/asvspoof2021/pre_trained_LA_RawNet2.zip"
+_CKPT_URL = "https://www.asvspoof.org/asvspoof2021/pre_trained_LA_RawNet2.zip"
 _CKPT_NAME = "pre_trained_LA_RawNet2.pth"
-_CKPT_ZIP  = "pre_trained_LA_RawNet2.zip"
+_CKPT_ZIP = "pre_trained_LA_RawNet2.zip"
 
-_SAMPLE_RATE     = 16_000
-_MAX_SAMPLES     = 64_600
+_SAMPLE_RATE = 16_000
+_MAX_SAMPLES = 64_600
 
 _NB_SINC_FILTERS = 20
 _SINC_FILTER_LEN = 1024
-_NB_FILTS        = [20, 20, 20, 128, 128, 128, 128]
-_GRU_NODE        = 1024
-_NB_FC_NODE      = 1024
-_NB_CLASSES      = 2
+_NB_FILTS = [20, 20, 20, 128, 128, 128, 128]
+_GRU_NODE = 1024
+_NB_FC_NODE = 1024
+_NB_CLASSES = 2
 
 
 # ---------------------------------------------------------------------------
@@ -84,20 +84,18 @@ class _SincConv(nn.Module):
             kernel_size += 1  # force odd (symmetric filter)
 
         self.out_channels = out_channels
-        self.kernel_size  = kernel_size
-        self.sample_rate  = sample_rate
-        self.stride       = stride
-        self.padding      = padding
-        self.dilation     = dilation
+        self.kernel_size = kernel_size
+        self.sample_rate = sample_rate
+        self.stride = stride
+        self.padding = padding
+        self.dilation = dilation
 
         n_fft = 512
-        f     = int(sample_rate / 2) * np.linspace(0, 1, int(n_fft / 2) + 1)
-        fmel  = self._to_mel(f)
+        f = int(sample_rate / 2) * np.linspace(0, 1, int(n_fft / 2) + 1)
+        fmel = self._to_mel(f)
         band_edges_mel = np.linspace(fmel.min(), fmel.max(), out_channels + 1)
         self.mel = self._to_hz(band_edges_mel)
-        self.hsupp = torch.arange(
-            -(kernel_size - 1) / 2.0, (kernel_size - 1) / 2.0 + 1
-        )
+        self.hsupp = torch.arange(-(kernel_size - 1) / 2.0, (kernel_size - 1) / 2.0 + 1)
         self.band_pass = torch.zeros(out_channels, kernel_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -112,15 +110,13 @@ class _SincConv(nn.Module):
             )
             hideal = hHigh - hLow
             self.band_pass[i, :] = torch.from_numpy(
-                np.hamming(self.kernel_size).astype(np.float32)
-                * hideal.astype(np.float32)
+                np.hamming(self.kernel_size).astype(np.float32) * hideal.astype(np.float32)
             )
 
-        filters = self.band_pass.to(x.device).view(
-            self.out_channels, 1, self.kernel_size
-        )
+        filters = self.band_pass.to(x.device).view(self.out_channels, 1, self.kernel_size)
         return F.conv1d(
-            x, filters,
+            x,
+            filters,
             stride=self.stride,
             padding=self.padding,
             dilation=self.dilation,
@@ -144,11 +140,9 @@ class _ResBlock(nn.Module):
         if not first:
             self.bn1 = nn.BatchNorm1d(nb_filts[0])
         self.lrelu = nn.LeakyReLU(negative_slope=0.3)
-        self.conv1 = nn.Conv1d(nb_filts[0], nb_filts[1],
-                               kernel_size=3, padding=1, stride=1)
-        self.bn2   = nn.BatchNorm1d(nb_filts[1])
-        self.conv2 = nn.Conv1d(nb_filts[1], nb_filts[1],
-                               kernel_size=3, padding=1, stride=1)
+        self.conv1 = nn.Conv1d(nb_filts[0], nb_filts[1], kernel_size=3, padding=1, stride=1)
+        self.bn2 = nn.BatchNorm1d(nb_filts[1])
+        self.conv2 = nn.Conv1d(nb_filts[1], nb_filts[1], kernel_size=3, padding=1, stride=1)
         if nb_filts[0] != nb_filts[1]:
             self.downsample = True
             self.conv_downsample = nn.Conv1d(
@@ -165,7 +159,7 @@ class _ResBlock(nn.Module):
             out = self.lrelu(out)
         else:
             out = x
-        out = self.conv1(x)        # upstream quirk: uses x, not bn1(x)
+        out = self.conv1(x)  # upstream quirk: uses x, not bn1(x)
         out = self.bn2(out)
         out = self.lrelu(out)
         out = self.conv2(out)
@@ -192,8 +186,8 @@ class _RawNet2Model(nn.Module):
             sample_rate=_SAMPLE_RATE,
         )
         self.first_bn = nn.BatchNorm1d(_NB_SINC_FILTERS)
-        self.selu     = nn.SELU(inplace=True)
-        self.sig      = nn.Sigmoid()
+        self.selu = nn.SELU(inplace=True)
+        self.sig = nn.Sigmoid()
 
         # Residual blocks  (channel schedule: 20→20→20→128→128→128→128)
         self.block0 = nn.Sequential(_ResBlock([_NB_FILTS[0], _NB_FILTS[1]], first=True))
@@ -217,7 +211,7 @@ class _RawNet2Model(nn.Module):
         self.gru = nn.GRU(
             input_size=_NB_FILTS[-1],
             hidden_size=_GRU_NODE,
-            num_layers=3,                # upstream: nb_gru_layer=3
+            num_layers=3,  # upstream: nb_gru_layer=3
             batch_first=True,
         )
         self.fc1_gru = nn.Linear(_GRU_NODE, _NB_FC_NODE)
@@ -226,8 +220,7 @@ class _RawNet2Model(nn.Module):
 
     @staticmethod
     def _make_attention_fc(in_features: int, out_features: int) -> nn.Sequential:
-        return nn.Sequential(nn.Linear(in_features=in_features,
-                                       out_features=out_features))
+        return nn.Sequential(nn.Linear(in_features=in_features, out_features=out_features))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """x: [B, T] raw waveform at 16 kHz."""
@@ -277,7 +270,7 @@ class _RawNet2Model(nn.Module):
 
         x = self.bn_before_gru(x)
         x = self.selu(x)
-        x = x.permute(0, 2, 1)                # (B, F, T) → (B, T, F)
+        x = x.permute(0, 2, 1)  # (B, F, T) → (B, T, F)
         self.gru.flatten_parameters()
         x, _ = self.gru(x)
         x = x[:, -1, :]
@@ -290,18 +283,22 @@ class _RawNet2Model(nn.Module):
 # Audio helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_audio(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> torch.Tensor:
     try:
         import torchaudio
+
         wav, sr = torchaudio.load(str(path))
         if sr != target_sr:
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     except Exception:
         import soundfile as sf
+
         data, sr = sf.read(str(path), always_2d=True)
         wav = torch.from_numpy(data.T.astype(np.float32))
         if sr != target_sr:
             import torchaudio
+
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)
@@ -318,6 +315,7 @@ def _pad_or_trim(wav: torch.Tensor, length: int) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # DetectZoo detector wrapper
 # ---------------------------------------------------------------------------
+
 
 @register_detector("rawnet2", aliases=["rawnet2_audio"])
 class RawNet2Detector(BaseDetector):
@@ -380,9 +378,7 @@ class RawNet2Detector(BaseDetector):
         self._model.to(self._device).eval()
 
     def _load_weights(self) -> None:
-        state = torch.load(
-            self._weight_path, map_location="cpu", weights_only=False
-        )
+        state = torch.load(self._weight_path, map_location="cpu", weights_only=False)
         if isinstance(state, dict):
             for key in ("model", "state_dict", "model_state_dict"):
                 if key in state:
@@ -435,9 +431,9 @@ class RawNet2Detector(BaseDetector):
         DetectionResult
             score=P(ai), label='ai'/'human', confidence in [0,1].
         """
-        wav    = self._normalize_input(input_data).unsqueeze(0).to(self._device)
+        wav = self._normalize_input(input_data).unsqueeze(0).to(self._device)
         logits = self._model(wav)
-        probs  = torch.softmax(logits, dim=-1)
+        probs = torch.softmax(logits, dim=-1)
 
         score_ai = float(probs[0, 0])
 

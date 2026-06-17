@@ -76,9 +76,9 @@ class ReviseDetector(BaseTextDetector):
 
         logger.info("Loading revision model '%s' …", self.revision_model_name)
         self._seq2seq_tokenizer = AutoTokenizer.from_pretrained(self.revision_model_name)
-        self._seq2seq_model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.revision_model_name
-        ).to(self._device)
+        self._seq2seq_model = AutoModelForSeq2SeqLM.from_pretrained(self.revision_model_name).to(
+            self._device
+        )
         self._seq2seq_model.eval()
 
     @property
@@ -101,10 +101,16 @@ class ReviseDetector(BaseTextDetector):
     def _revise(self, text: str) -> str:
         """Generate a revised version of *text* using the seq2seq model."""
         enc = self.seq2seq_tokenizer(
-            text, return_tensors="pt", truncation=True, max_length=self.max_length,
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
         ).to(self._device)
         out = self.seq2seq_model.generate(
-            **enc, max_new_tokens=self.max_length, num_beams=4, length_penalty=1.0,
+            **enc,
+            max_new_tokens=self.max_length,
+            num_beams=4,
+            length_penalty=1.0,
         )
         return self.seq2seq_tokenizer.decode(out[0], skip_special_tokens=True)
 
@@ -116,10 +122,16 @@ class ReviseDetector(BaseTextDetector):
     def _bart_score(self, source: str, target: str) -> float:
         """Compute average token log-prob of *target* conditioned on *source*."""
         src_enc = self.seq2seq_tokenizer(
-            source, return_tensors="pt", truncation=True, max_length=self.max_length,
+            source,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
         ).to(self._device)
         tgt_enc = self.seq2seq_tokenizer(
-            target, return_tensors="pt", truncation=True, max_length=self.max_length,
+            target,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
         )
         labels = tgt_enc["input_ids"].to(self._device)
 

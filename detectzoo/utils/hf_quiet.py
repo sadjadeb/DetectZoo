@@ -49,3 +49,6 @@ def configure_hf_quiet() -> None:
         logging.getLogger(name).setLevel(logging.ERROR)
 
     _sync_huggingface_hub_verbosity()
+
+
+configure_hf_quiet()

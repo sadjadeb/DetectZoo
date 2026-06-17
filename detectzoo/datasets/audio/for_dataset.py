@@ -278,15 +278,13 @@ def _load_preprocessed(
         empty = [role for role, n in c.items() if n == 0]
         if empty:
             avail = {
-                sp: cs for sp, cs in per_split_counts.items()
-                if all(v > 0 for v in cs.values())
+                sp: cs for sp, cs in per_split_counts.items() if all(v > 0 for v in cs.values())
             }
             hint = (
                 f" Try `split={next(iter(avail))!r}` instead — that split "
                 f"has both classes ({avail[next(iter(avail))]})."
                 if avail
-                else " No other split has both classes either; the local "
-                "extraction is incomplete."
+                else " No other split has both classes either; the local extraction is incomplete."
             )
             raise RuntimeError(
                 f"FoR ({variant_key}, split={split!r}): the {empty!r} class "

@@ -110,6 +110,7 @@ class DeTeCtiveDetector(BaseTextDetector):
                 repo_id = _AVAILABLE_CHECKPOINTS[ckpt_path]
                 try:
                     from huggingface_hub import hf_hub_download
+
                     ckpt_path = hf_hub_download(
                         repo_id=repo_id,
                         filename=str(self.checkpoint),
@@ -117,13 +118,16 @@ class DeTeCtiveDetector(BaseTextDetector):
                 except Exception as exc:
                     logger.warning(
                         "Could not download checkpoint '%s' from %s: %s",
-                        self.checkpoint, repo_id, exc,
+                        self.checkpoint,
+                        repo_id,
+                        exc,
                     )
                     return
             else:
                 logger.warning(
                     "Checkpoint '%s' not found locally and is not a known "
-                    "official checkpoint. Skipping.", self.checkpoint,
+                    "official checkpoint. Skipping.",
+                    self.checkpoint,
                 )
                 return
 
@@ -135,13 +139,14 @@ class DeTeCtiveDetector(BaseTextDetector):
         enc_state: dict[str, Any] = {}
         for key, val in state_dict.items():
             if key.startswith("model.model."):
-                enc_state[key[len("model.model."):]] = val
+                enc_state[key[len("model.model.") :]] = val
             elif key.startswith("model."):
-                enc_state[key[len("model."):]] = val
+                enc_state[key[len("model.") :]] = val
 
         if enc_state:
             missing, unexpected = self._enc_model.load_state_dict(  # type: ignore[union-attr]
-                enc_state, strict=False,
+                enc_state,
+                strict=False,
             )
             if missing:
                 logger.debug("Missing keys when loading checkpoint: %s", missing[:5])
@@ -192,8 +197,7 @@ class DeTeCtiveDetector(BaseTextDetector):
 
         if weight is not None:
             ref_dir = F.normalize(weight.mean(dim=0, keepdim=True), dim=-1).squeeze(0)
-            score = float(F.cosine_similarity(emb.unsqueeze(0),
-                                               ref_dir.unsqueeze(0)).squeeze())
+            score = float(F.cosine_similarity(emb.unsqueeze(0), ref_dir.unsqueeze(0)).squeeze())
         else:
             score = float(emb.abs().mean())
 

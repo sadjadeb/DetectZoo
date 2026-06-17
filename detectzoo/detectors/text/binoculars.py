@@ -87,9 +87,9 @@ class BinocularsDetector(BaseTextDetector):
         self._performer_tokenizer = AutoTokenizer.from_pretrained(self.performer_model_name)
         if self._performer_tokenizer.pad_token is None:
             self._performer_tokenizer.pad_token = self._performer_tokenizer.eos_token
-        self._performer_model = AutoModelForCausalLM.from_pretrained(
-            self.performer_model_name
-        ).to(self._device)
+        self._performer_model = AutoModelForCausalLM.from_pretrained(self.performer_model_name).to(
+            self._device
+        )
         self._performer_model.eval()
 
     # ------------------------------------------------------------------
@@ -105,7 +105,7 @@ class BinocularsDetector(BaseTextDetector):
             truncation=True,
             max_length=self.max_length,
         ).to(self._device)
-        observer_logits = self.model(**enc).logits          # [1, T, V]
+        observer_logits = self.model(**enc).logits  # [1, T, V]
         performer_logits = self.performer_model(**enc).logits  # [1, T, V]
         return observer_logits, performer_logits, enc
 

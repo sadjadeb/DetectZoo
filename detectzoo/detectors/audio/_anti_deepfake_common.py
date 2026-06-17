@@ -81,9 +81,8 @@ _SAFETENSORS_FILENAME = "model.safetensors"
 # DetectZoo: ast_asvspoof, xlsr_sls, ...).
 # ---------------------------------------------------------------------------
 
-def load_audio_to_numpy(
-    path: Union[str, Path], target_sr: int = SAMPLE_RATE
-) -> np.ndarray:
+
+def load_audio_to_numpy(path: Union[str, Path], target_sr: int = SAMPLE_RATE) -> np.ndarray:
     """Load an audio file -> mono float32 numpy array at ``target_sr``."""
     try:
         import torchaudio
@@ -174,12 +173,9 @@ def _translate_fairseq_ssl_state_dict(
     """
     new_sd: Dict[str, torch.Tensor] = {}
 
-    pos_conv_legacy = any(
-        "pos_conv_embed.conv.weight_g" in k for k in expected_keys
-    )
+    pos_conv_legacy = any("pos_conv_embed.conv.weight_g" in k for k in expected_keys)
     pos_conv_param = any(
-        "pos_conv_embed.conv.parametrizations.weight.original" in k
-        for k in expected_keys
+        "pos_conv_embed.conv.parametrizations.weight.original" in k for k in expected_keys
     )
 
     def _put(target: str, value: torch.Tensor) -> None:
@@ -195,7 +191,7 @@ def _translate_fairseq_ssl_state_dict(
         if not key.startswith(_SSL_PREFIX):
             continue
 
-        k = key[len(_SSL_PREFIX):]
+        k = key[len(_SSL_PREFIX) :]
 
         if any(k.startswith(p) for p in _DROP_PREFIXES) or k == "label_embs_concat":
             continue
@@ -209,25 +205,25 @@ def _translate_fairseq_ssl_state_dict(
             i = parts[2]
             inner = ".".join(parts[3:])
             if inner.startswith("0."):
-                tail = inner[len("0."):]
+                tail = inner[len("0.") :]
                 _put(f"feature_extractor.conv_layers.{i}.conv.{tail}", val)
             elif inner.startswith("2.1."):
-                tail = inner[len("2.1."):]
+                tail = inner[len("2.1.") :]
                 _put(f"feature_extractor.conv_layers.{i}.layer_norm.{tail}", val)
             continue
 
         if k.startswith("post_extract_proj."):
-            tail = k[len("post_extract_proj."):]
+            tail = k[len("post_extract_proj.") :]
             _put(f"feature_projection.projection.{tail}", val)
             continue
 
         if k.startswith("layer_norm."):
-            tail = k[len("layer_norm."):]
+            tail = k[len("layer_norm.") :]
             _put(f"feature_projection.layer_norm.{tail}", val)
             continue
 
         if k.startswith("encoder.pos_conv.0."):
-            tail = k[len("encoder.pos_conv.0."):]
+            tail = k[len("encoder.pos_conv.0.") :]
             if tail == "weight_g":
                 if pos_conv_legacy:
                     _put("encoder.pos_conv_embed.conv.weight_g", val)
@@ -257,19 +253,19 @@ def _translate_fairseq_ssl_state_dict(
             i = parts[2]
             inner = ".".join(parts[3:])
             if inner.startswith("self_attn_layer_norm."):
-                tail = inner[len("self_attn_layer_norm."):]
+                tail = inner[len("self_attn_layer_norm.") :]
                 _put(f"encoder.layers.{i}.layer_norm.{tail}", val)
             elif inner.startswith("self_attn."):
-                tail = inner[len("self_attn."):]
+                tail = inner[len("self_attn.") :]
                 _put(f"encoder.layers.{i}.attention.{tail}", val)
             elif inner.startswith("fc1."):
-                tail = inner[len("fc1."):]
+                tail = inner[len("fc1.") :]
                 _put(f"encoder.layers.{i}.feed_forward.intermediate_dense.{tail}", val)
             elif inner.startswith("fc2."):
-                tail = inner[len("fc2."):]
+                tail = inner[len("fc2.") :]
                 _put(f"encoder.layers.{i}.feed_forward.output_dense.{tail}", val)
             elif inner.startswith("final_layer_norm."):
-                tail = inner[len("final_layer_norm."):]
+                tail = inner[len("final_layer_norm.") :]
                 _put(f"encoder.layers.{i}.final_layer_norm.{tail}", val)
             continue
 
@@ -279,6 +275,7 @@ def _translate_fairseq_ssl_state_dict(
 # ---------------------------------------------------------------------------
 # Detector module: SSL frontend + global-avg-pool + 2-class linear classifier
 # ---------------------------------------------------------------------------
+
 
 class AntiDeepfakeDetectorModule(nn.Module):
     """Pure-HuggingFace re-implementation of the AntiDeepfake DeepfakeDetector.
@@ -327,16 +324,17 @@ class AntiDeepfakeDetectorModule(nn.Module):
         return out[0]
 
     def forward(self, wav: torch.Tensor) -> torch.Tensor:
-        emb = self.extract_features(wav)            # [B, T', D]
-        emb = emb.transpose(1, 2)                   # [B, D, T']
+        emb = self.extract_features(wav)  # [B, T', D]
+        emb = emb.transpose(1, 2)  # [B, D, T']
         pooled = self.adap_pool1d(emb).squeeze(-1)  # [B, D]
-        logits = self.proj_fc(pooled)               # [B, 2]
+        logits = self.proj_fc(pooled)  # [B, 2]
         return logits
 
 
 # ---------------------------------------------------------------------------
 # End-to-end loader: download safetensors, build HF model, load weights
 # ---------------------------------------------------------------------------
+
 
 def build_anti_deepfake_detector(
     model_name: str,
@@ -399,9 +397,7 @@ def build_anti_deepfake_detector(
     )
 
     config = AutoConfig.from_pretrained(model_name, cache_dir=str(cache_dir))
-    if expected_hidden_size is not None and int(config.hidden_size) != int(
-        expected_hidden_size
-    ):
+    if expected_hidden_size is not None and int(config.hidden_size) != int(expected_hidden_size):
         _LOGGER.warning(
             "AntiDeepfake: %s has hidden_size=%d but the wrapper expected "
             "%d -- proceeding with the value from the HF config.",
@@ -418,9 +414,7 @@ def build_anti_deepfake_detector(
     # state dict and override the config so the architecture we build
     # matches the weights we are about to load.
     has_conv_bias = any(
-        ".feature_extractor.conv_layers." in k
-        and k.endswith(".0.bias")
-        for k in fairseq_sd.keys()
+        ".feature_extractor.conv_layers." in k and k.endswith(".0.bias") for k in fairseq_sd.keys()
     )
     if hasattr(config, "conv_bias") and bool(config.conv_bias) != has_conv_bias:
         _LOGGER.debug(
@@ -445,9 +439,7 @@ def build_anti_deepfake_detector(
     ssl_model.eval()
 
     expected_keys = set(ssl_model.state_dict().keys())
-    new_sd, head_kept = _translate_fairseq_ssl_state_dict(
-        fairseq_sd, expected_keys
-    )
+    new_sd, head_kept = _translate_fairseq_ssl_state_dict(fairseq_sd, expected_keys)
 
     # Pre-load visibility: how many fairseq SSL tensors did we actually
     # find a destination for, vs how many we know we're dropping on
@@ -455,19 +447,18 @@ def build_anti_deepfake_detector(
     # the silent-failure mode -- if non-zero they get logged below).
     n_fairseq_ssl = sum(1 for k in fairseq_sd if k.startswith(_SSL_PREFIX))
     n_intentionally_dropped = sum(
-        1 for k in fairseq_sd
+        1
+        for k in fairseq_sd
         if k.startswith(_SSL_PREFIX)
         and (
-            any(k[len(_SSL_PREFIX):].startswith(p) for p in _DROP_PREFIXES)
-            or k[len(_SSL_PREFIX):] == "label_embs_concat"
+            any(k[len(_SSL_PREFIX) :].startswith(p) for p in _DROP_PREFIXES)
+            or k[len(_SSL_PREFIX) :] == "label_embs_concat"
         )
     )
     n_translated = len(new_sd)
     n_unmapped_fairseq = n_fairseq_ssl - n_intentionally_dropped - n_translated
 
-    sample_fairseq = sorted(
-        k for k in fairseq_sd if k.startswith(_SSL_PREFIX)
-    )[:5]
+    sample_fairseq = sorted(k for k in fairseq_sd if k.startswith(_SSL_PREFIX))[:5]
     sample_hf = sorted(expected_keys)[:5]
     _LOGGER.info(
         "AntiDeepfake/%s: state-dict translation -- "
@@ -482,11 +473,13 @@ def build_anti_deepfake_detector(
     )
     _LOGGER.debug(
         "AntiDeepfake/%s: fairseq sample (5): %s",
-        model_name, sample_fairseq,
+        model_name,
+        sample_fairseq,
     )
     _LOGGER.debug(
         "AntiDeepfake/%s: HF expected sample (5): %s",
-        model_name, sample_hf,
+        model_name,
+        sample_hf,
     )
 
     missing, unexpected = ssl_model.load_state_dict(new_sd, strict=False)
@@ -520,21 +513,20 @@ def build_anti_deepfake_detector(
         _LOGGER.debug(
             "AntiDeepfake/%s: %d SSL tensor(s) left at random init "
             "(all benign HF-only buffers): %s",
-            model_name, len(missing), missing,
+            model_name,
+            len(missing),
+            missing,
         )
     if unexpected:
         _LOGGER.warning(
-            "AntiDeepfake/%s: %d unexpected SSL tensor(s) ignored by HF "
-            "model: %s%s",
+            "AntiDeepfake/%s: %d unexpected SSL tensor(s) ignored by HF model: %s%s",
             model_name,
             len(unexpected),
             unexpected[:8],
             " ..." if len(unexpected) > 8 else "",
         )
 
-    detector = AntiDeepfakeDetectorModule(
-        ssl_model=ssl_model, hidden_size=int(config.hidden_size)
-    )
+    detector = AntiDeepfakeDetectorModule(ssl_model=ssl_model, hidden_size=int(config.hidden_size))
 
     head_sd = {
         "proj_fc.weight": fairseq_sd["proj_fc.weight"],
@@ -557,6 +549,7 @@ def build_anti_deepfake_detector(
 # Single-utterance forward (matches the inference script on every model card)
 # ---------------------------------------------------------------------------
 
+
 @torch.no_grad()
 def run_inference(
     detector: AntiDeepfakeDetectorModule,
@@ -569,14 +562,12 @@ def run_inference(
     ``score_human`` are softmax probabilities (so ``score_ai + score_human == 1``)
     and ``logits`` is the raw 2-element logit tensor (still on ``device``).
     """
-    wav_tensor = torch.from_numpy(np.ascontiguousarray(wav)).to(
-        device=device, dtype=torch.float32
-    )
+    wav_tensor = torch.from_numpy(np.ascontiguousarray(wav)).to(device=device, dtype=torch.float32)
     wav_tensor = F.layer_norm(wav_tensor, wav_tensor.shape)
     wav_tensor = wav_tensor.unsqueeze(0)  # [1, T]
 
     logits = detector(wav_tensor).view(-1)
     probs = torch.softmax(logits, dim=-1)
-    score_ai = float(probs[0].item())     # index 0 = fake
+    score_ai = float(probs[0].item())  # index 0 = fake
     score_human = float(probs[1].item())  # index 1 = real
     return score_ai, score_human, logits

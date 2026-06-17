@@ -92,21 +92,27 @@ class HC3Dataset(BaseDataset):
 
         items: List[DatasetItem] = []
         for subset in self.subsets:
-            ds = load_dataset("json", data_files=f"hf://datasets/Hello-SimpleAI/HC3/{subset}.jsonl")[self.split]
+            ds = load_dataset(
+                "json", data_files=f"hf://datasets/Hello-SimpleAI/HC3/{subset}.jsonl"
+            )[self.split]
             for row in ds:
                 question = row.get("question", "")
                 for answer in row.get("human_answers", []):
-                    items.append(DatasetItem(
-                        data=answer,
-                        label=0,
-                        metadata={"source": "human", "question": question, "subset": subset},
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=answer,
+                            label=0,
+                            metadata={"source": "human", "question": question, "subset": subset},
+                        )
+                    )
                 for answer in row.get("chatgpt_answers", []):
-                    items.append(DatasetItem(
-                        data=answer,
-                        label=1,
-                        metadata={"source": "chatgpt", "question": question, "subset": subset},
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=answer,
+                            label=1,
+                            metadata={"source": "chatgpt", "question": question, "subset": subset},
+                        )
+                    )
         return items
 
     def _load_from_local(self) -> List[DatasetItem]:
@@ -121,17 +127,21 @@ class HC3Dataset(BaseDataset):
                     row: dict[str, Any] = json.loads(line)
                     question = row.get("question", "")
                     for answer in row.get("human_answers", []):
-                        items.append(DatasetItem(
-                            data=answer,
-                            label=0,
-                            metadata={"source": "human", "question": question},
-                        ))
+                        items.append(
+                            DatasetItem(
+                                data=answer,
+                                label=0,
+                                metadata={"source": "human", "question": question},
+                            )
+                        )
                     for answer in row.get("chatgpt_answers", []):
-                        items.append(DatasetItem(
-                            data=answer,
-                            label=1,
-                            metadata={"source": "chatgpt", "question": question},
-                        ))
+                        items.append(
+                            DatasetItem(
+                                data=answer,
+                                label=1,
+                                metadata={"source": "chatgpt", "question": question},
+                            )
+                        )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

@@ -5,10 +5,10 @@ Reference:
     CVPR 2025.
     https://arxiv.org/abs/2404.04584
 
-The key idea: detects AI-generated images by modeling discrepancies at three levels: 
-pixel (data), feature distribution, and generation dynamics.It utilizes a dual-branch 
-approach where CLIP ViT-L/14 processes both the original image and a patch-shuffled 
-version.  A learned transformer attention head aggregates penultimate-layer features 
+The key idea: detects AI-generated images by modeling discrepancies at three levels:
+pixel (data), feature distribution, and generation dynamics.It utilizes a dual-branch
+approach where CLIP ViT-L/14 processes both the original image and a patch-shuffled
+version.  A learned transformer attention head aggregates penultimate-layer features
 from both views, using the discrepancy between intact and distorted representations.
 
 Upstream: https://github.com/BigAandSmallq/D3
@@ -41,7 +41,7 @@ _PENULTIMATE_DIM = 1024  # ViT-L/14 pre-projection width
 
 class _TransformerAttention(nn.Module):
     """Transformer attention head for aggregating penultimate-layer features."""
-    
+
     def __init__(self, input_dim: int, output_dim: int, last_dim: int = 1) -> None:
         super().__init__()
         self.query = nn.Linear(input_dim, input_dim)
@@ -96,8 +96,8 @@ class _D3Model(nn.Module):
             if name == "ln_post":
                 mod.register_forward_hook(hook)
                 return
-    
-    # ------------------------------------------------------------------    
+
+    # ------------------------------------------------------------------
     # Distorting images
     # ------------------------------------------------------------------
 
@@ -105,8 +105,12 @@ class _D3Model(nn.Module):
     def _shuffle_patches(x: torch.Tensor, patch_size: int) -> torch.Tensor:
         patches = F.unfold(x, kernel_size=patch_size, stride=patch_size)
         shuffled = patches[:, :, torch.randperm(patches.size(-1))]
-        return F.fold(shuffled, output_size=(x.shape[2], x.shape[3]),
-                      kernel_size=patch_size, stride=patch_size)
+        return F.fold(
+            shuffled,
+            output_size=(x.shape[2], x.shape[3]),
+            kernel_size=patch_size,
+            stride=patch_size,
+        )
 
     def _encode_penultimate(self, x: torch.Tensor) -> torch.Tensor:
         self.clip(x)
@@ -120,9 +124,9 @@ class _D3Model(nn.Module):
         features: list[torch.Tensor] = []
         with torch.no_grad():
             for _ in range(self.shuffle_times):
-                features.append(self._encode_penultimate(
-                    self._shuffle_patches(x, self.patch_size[0])
-                ))
+                features.append(
+                    self._encode_penultimate(self._shuffle_patches(x, self.patch_size[0]))
+                )
             for _ in range(self.original_times):
                 features.append(self._encode_penultimate(x))
         stacked = torch.stack(features, dim=-2)
@@ -172,7 +176,9 @@ class D3Detector(BaseDetector):
             download_file(_CKPT_URL, self._ckpt)
 
         self._model = _D3Model(
-            shuffle_times=shuffle_times, original_times=1, patch_size=patch_size,
+            shuffle_times=shuffle_times,
+            original_times=1,
+            patch_size=patch_size,
         )
 
         head_state = torch.load(self._ckpt, map_location=self._device, weights_only=False)
@@ -181,11 +187,13 @@ class D3Detector(BaseDetector):
         self._model.attention_head.load_state_dict(head_state, strict=True)
         self._model.to(self._device).eval()
 
-        self._transform = transforms.Compose([
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=_CLIP_MEAN, std=_CLIP_STD),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=_CLIP_MEAN, std=_CLIP_STD),
+            ]
+        )
 
     # ------------------------------------------------------------------
     # Input handling
@@ -198,10 +206,9 @@ class D3Detector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
-    
+
     # ------------------------------------------------------------------
     # Inference
     # ------------------------------------------------------------------

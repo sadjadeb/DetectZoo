@@ -56,11 +56,12 @@ def _levenshtein_ratio(s1: str, s2: str) -> float:
 
 def _ngram_overlap(text1: str, text2: str, n: int) -> float:
     """Normalised n-gram overlap between two texts."""
+
     def _ngrams(text: str, n: int) -> dict[tuple[str, ...], int]:
         tokens = text.lower().split()
         ng: dict[tuple[str, ...], int] = {}
         for i in range(len(tokens) - n + 1):
-            key = tuple(tokens[i:i + n])
+            key = tuple(tokens[i : i + n])
             ng[key] = ng.get(key, 0) + 1
         return ng
 
@@ -115,9 +116,9 @@ class RaidarDetector(BaseTextDetector):
 
         logger.info("Loading Raidar rewrite model '%s' …", self.rewrite_model_name)
         self._rw_tokenizer = AutoTokenizer.from_pretrained(self.rewrite_model_name)
-        self._rw_model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.rewrite_model_name
-        ).to(self._device)
+        self._rw_model = AutoModelForSeq2SeqLM.from_pretrained(self.rewrite_model_name).to(
+            self._device
+        )
         self._rw_model.eval()
 
     @property
@@ -135,12 +136,16 @@ class RaidarDetector(BaseTextDetector):
     @torch.no_grad()
     def _rewrite(self, text: str) -> str:
         enc = self.rw_tokenizer(
-            text, return_tensors="pt", truncation=True,
+            text,
+            return_tensors="pt",
+            truncation=True,
             max_length=self.max_length,
         ).to(self._device)
         out = self.rw_model.generate(
-            **enc, max_new_tokens=self.max_length,
-            num_beams=4, length_penalty=1.0,
+            **enc,
+            max_new_tokens=self.max_length,
+            num_beams=4,
+            length_penalty=1.0,
         )
         return self.rw_tokenizer.decode(out[0], skip_special_tokens=True)
 

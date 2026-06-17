@@ -175,17 +175,21 @@ class ImBDRawDataset(BaseDataset):
         items: List[DatasetItem] = []
         for idx, (human, ai) in enumerate(zip(originals, rewrittens)):
             if isinstance(human, str) and human.strip():
-                items.append(DatasetItem(
-                    data=human,
-                    label=0,
-                    metadata={"source": "human", "index": idx, "file": str(self.path)},
-                ))
+                items.append(
+                    DatasetItem(
+                        data=human,
+                        label=0,
+                        metadata={"source": "human", "index": idx, "file": str(self.path)},
+                    )
+                )
             if isinstance(ai, str) and ai.strip():
-                items.append(DatasetItem(
-                    data=ai,
-                    label=1,
-                    metadata={"source": "ai", "index": idx, "file": str(self.path)},
-                ))
+                items.append(
+                    DatasetItem(
+                        data=ai,
+                        label=1,
+                        metadata={"source": "ai", "index": idx, "file": str(self.path)},
+                    )
+                )
         return items
 
 
@@ -195,15 +199,49 @@ class ImBDRawDataset(BaseDataset):
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--tasks", nargs="+", default=TASKS, choices=TASKS, help="ImBD task folders to evaluate (default: all).")
-    p.add_argument("--models", nargs="+", default=MODELS, help="Generator model folders to evaluate (default: all).")
-    p.add_argument("--sources", nargs="+", default=None, help="Restrict to these source corpora (e.g. xsum writing pubmed squad).")
-    p.add_argument("--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names to run.")
-    p.add_argument("--device", type=str, default="cuda", help="Device for detectors (default: cuda).")
-    p.add_argument("--max-samples", type=int, default=None, help="Cap samples per file for quick debug runs.")
-    p.add_argument("--output-dir", type=Path, default=Path("experiments"), help="Directory for per-file benchmark JSONs.")
-    p.add_argument("--save-scores", action="store_true", help="Store per-sample scores in each output JSON.")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--tasks",
+        nargs="+",
+        default=TASKS,
+        choices=TASKS,
+        help="ImBD task folders to evaluate (default: all).",
+    )
+    p.add_argument(
+        "--models",
+        nargs="+",
+        default=MODELS,
+        help="Generator model folders to evaluate (default: all).",
+    )
+    p.add_argument(
+        "--sources",
+        nargs="+",
+        default=None,
+        help="Restrict to these source corpora (e.g. xsum writing pubmed squad).",
+    )
+    p.add_argument(
+        "--detectors",
+        nargs="+",
+        default=DEFAULT_DETECTOR_NAMES,
+        help="Detector registry names to run.",
+    )
+    p.add_argument(
+        "--device", type=str, default="cuda", help="Device for detectors (default: cuda)."
+    )
+    p.add_argument(
+        "--max-samples", type=int, default=None, help="Cap samples per file for quick debug runs."
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("experiments"),
+        help="Directory for per-file benchmark JSONs.",
+    )
+    p.add_argument(
+        "--save-scores", action="store_true", help="Store per-sample scores in each output JSON."
+    )
     return p.parse_args()
 
 
@@ -274,7 +312,9 @@ def main() -> None:
         out_path = args.output_dir / f"imbd__{file.slug}__{ts}.json"
         evaluator = BenchmarkEvaluator(dataset)
         try:
-            evaluator.run_and_save(detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True)
+            evaluator.run_and_save(
+                detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True
+            )
             print(f"  results -> {out_path}")
         except Exception:
             print(f"  [ERROR] evaluation failed for {file.slug}")

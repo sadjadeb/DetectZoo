@@ -5,7 +5,7 @@ Reference:
     Generative Models", CVPR 2023.
     https://arxiv.org/abs/2302.10174
 
-The key idea: Univ-FD uses pretrained CLIP image embeddings to represent images in a rich, 
+The key idea: Univ-FD uses pretrained CLIP image embeddings to represent images in a rich,
 semantic feature space. A simple linear classifier is trained on top to distinguish real vs fake.
 
 Upstream: https://github.com/WisconsinAIVision/UniversalFakeDetect
@@ -69,7 +69,9 @@ def _build_clip_linear(device: torch.device) -> _CLIPLinearModel:
         ) from e
 
     clip_model, _, _ = open_clip.create_model_and_transforms(
-        "ViT-L-14", pretrained="openai", device=device,
+        "ViT-L-14",
+        pretrained="openai",
+        device=device,
     )
     clip_model.eval()
     for param in clip_model.parameters():
@@ -144,8 +146,7 @@ class UnivFDDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

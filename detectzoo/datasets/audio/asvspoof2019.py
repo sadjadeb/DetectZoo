@@ -89,10 +89,7 @@ def _find_track_root(user_root: Path, track: str) -> Path:
         if (d / proto_leaf).is_dir():
             return True
         # Tolerate extracts that contain only flac dirs (no protocols).
-        return any(
-            (d / leaf / "flac").is_dir()
-            for leaf in (train_leaf, dev_leaf, eval_leaf)
-        )
+        return any((d / leaf / "flac").is_dir() for leaf in (train_leaf, dev_leaf, eval_leaf))
 
     # User pointed straight at one of the partition leaves.
     if u.name in {train_leaf, dev_leaf, eval_leaf}:
@@ -119,9 +116,7 @@ def _find_track_root(user_root: Path, track: str) -> Path:
 def _protocol_file(track_root: Path, track: str, partition: str) -> Path:
     proto_dir = track_root / f"ASVspoof2019_{track}_cm_protocols"
     if not proto_dir.is_dir():
-        raise FileNotFoundError(
-            f"ASVspoof 2019: missing protocols directory {proto_dir}"
-        )
+        raise FileNotFoundError(f"ASVspoof 2019: missing protocols directory {proto_dir}")
     if partition == "train":
         names = (f"ASVspoof2019.{track}.cm.train.trn.txt",)
     elif partition == "dev":
@@ -143,9 +138,7 @@ def _flac_dir(track_root: Path, track: str, partition: str) -> Path:
     sub = "train" if partition == "train" else "dev" if partition == "dev" else "eval"
     d = track_root / f"ASVspoof2019_{track}_{sub}" / "flac"
     if not d.is_dir():
-        raise FileNotFoundError(
-            f"ASVspoof 2019: expected FLAC directory {d}"
-        )
+        raise FileNotFoundError(f"ASVspoof 2019: expected FLAC directory {d}")
     return d
 
 

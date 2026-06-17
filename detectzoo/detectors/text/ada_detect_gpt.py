@@ -30,8 +30,9 @@ from detectzoo.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def _bspline_basis(x: torch.Tensor, start: float, end: float,
-                   n_bases: int, order: int) -> torch.Tensor:
+def _bspline_basis(
+    x: torch.Tensor, start: float, end: float, n_bases: int, order: int
+) -> torch.Tensor:
     """Evaluate B-spline basis functions of given order via Cox-de Boor.
 
     Returns tensor of shape ``(*x.shape, n_bases + order)`` containing
@@ -51,8 +52,7 @@ def _bspline_basis(x: torch.Tensor, start: float, end: float,
 
     # Recursive evaluation up to the desired order
     for k in range(1, order + 1):
-        new_bases = torch.zeros(flat.shape[0], n_knots - 1 - k,
-                                device=x.device, dtype=x.dtype)
+        new_bases = torch.zeros(flat.shape[0], n_knots - 1 - k, device=x.device, dtype=x.dtype)
         for i in range(n_knots - 1 - k):
             denom1 = knots[i + k] - knots[i]
             denom2 = knots[i + k + 1] - knots[i + 1]
@@ -64,9 +64,15 @@ def _bspline_basis(x: torch.Tensor, start: float, end: float,
     return bases.reshape(*x.shape, -1)
 
 
-def _apply_witness(log_probs: torch.Tensor, beta: torch.Tensor,
-                   start: float, end: float, n_bases: int,
-                   order: int, intercept: bool) -> torch.Tensor:
+def _apply_witness(
+    log_probs: torch.Tensor,
+    beta: torch.Tensor,
+    start: float,
+    end: float,
+    n_bases: int,
+    order: int,
+    intercept: bool,
+) -> torch.Tensor:
     """Apply the B-spline witness function ``w(z) = basis(z) @ beta``."""
     basis = _bspline_basis(log_probs, start, end, n_bases, order)
     if intercept:
@@ -76,8 +82,7 @@ def _apply_witness(log_probs: torch.Tensor, beta: torch.Tensor,
 
 
 # Pre-trained coefficients from the official repo (GPT-4o + Claude-3.5 + Gemini-2.5)
-_DEFAULT_BETA = [0.0, -0.011333, -0.037667, -0.056667,
-                 -0.281667, -0.592, 0.157833, 0.727333]
+_DEFAULT_BETA = [0.0, -0.011333, -0.037667, -0.056667, -0.281667, -0.592, 0.157833, 0.727333]
 
 
 @register_detector("adadetectgpt")
@@ -108,8 +113,7 @@ class AdaDetectGPTDetector(BaseTextDetector):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(model_name=model_name, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(model_name=model_name, threshold=threshold, device=device, **kwargs)
         self.beta_list = beta if beta is not None else list(_DEFAULT_BETA)
         self.n_bases = n_bases
         self.spline_order = spline_order
@@ -131,8 +135,13 @@ class AdaDetectGPTDetector(BaseTextDetector):
 
         # Apply witness function to log-probs
         w_lp = _apply_witness(
-            log_probs, beta, self.spline_start, self.spline_end,
-            self.n_bases, self.spline_order, intercept=True,
+            log_probs,
+            beta,
+            self.spline_start,
+            self.spline_end,
+            self.n_bases,
+            self.spline_order,
+            intercept=True,
         )
 
         # Gather observed witness-transformed log-prob

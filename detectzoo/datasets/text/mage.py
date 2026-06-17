@@ -123,11 +123,13 @@ class MAGEDataset(BaseDataset):
             source = row.get("src", "unknown")
             if self.sources and str(source).lower() not in self.sources:
                 continue
-            items.append(DatasetItem(
-                data=row[self.text_column],
-                label=self._flip_label(int(row[self.label_column])),
-                metadata={"source": source},
-            ))
+            items.append(
+                DatasetItem(
+                    data=row[self.text_column],
+                    label=self._flip_label(int(row[self.label_column])),
+                    metadata={"source": source},
+                )
+            )
         return items
 
     def _load_from_local(self) -> List[DatasetItem]:
@@ -143,11 +145,13 @@ class MAGEDataset(BaseDataset):
                         source = row.get("source", row.get("model", "unknown"))
                         if self.sources and source.lower() not in self.sources:
                             continue
-                        items.append(DatasetItem(
-                            data=row[self.text_column],
-                            label=self._flip_label(int(row[self.label_column])),
-                            metadata={"source": source},
-                        ))
+                        items.append(
+                            DatasetItem(
+                                data=row[self.text_column],
+                                label=self._flip_label(int(row[self.label_column])),
+                                metadata={"source": source},
+                            )
+                        )
             elif fp.suffix in (".json", ".jsonl"):
                 with open(fp, encoding="utf-8") as fh:
                     if fp.suffix == ".json":
@@ -158,11 +162,13 @@ class MAGEDataset(BaseDataset):
                     source = row.get("source", row.get("model", "unknown"))
                     if self.sources and str(source).lower() not in self.sources:
                         continue
-                    items.append(DatasetItem(
-                        data=row.get(self.text_column, ""),
-                        label=self._flip_label(int(row.get(self.label_column, 0))),
-                        metadata={"source": source},
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=row.get(self.text_column, ""),
+                            label=self._flip_label(int(row.get(self.label_column, 0))),
+                            metadata={"source": source},
+                        )
+                    )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

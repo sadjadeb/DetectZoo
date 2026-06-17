@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Any, List, Optional, Sequence, Tuple
 
 from detectzoo.core.registry import register_dataset
-from detectzoo.datasets.base import BaseDataset, DatasetItem
 from detectzoo.datasets._download import extract_tar_archive, get_cache_dir
+from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _IMAGE_EXTS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"})
 
@@ -37,9 +37,11 @@ _UNIVFD_TEST_DRIVE_FOLDER = (
 
 
 def _collect_images(directory: Path, label: int, partition: str) -> List[DatasetItem]:
-    meta = {"source": "real" if label == 0 else "fake",
-            "partition": partition,
-            "source_dataset": "univfd_diffusion"}
+    meta = {
+        "source": "real" if label == 0 else "fake",
+        "partition": partition,
+        "source_dataset": "univfd_diffusion",
+    }
     return [
         DatasetItem(data=str(p), label=label, metadata=meta)
         for p in sorted(directory.rglob("*"))
@@ -82,8 +84,12 @@ class UnivFDDataset(BaseDataset):
         if (real_dir is None) ^ (fake_dir is None):
             raise ValueError("real_dir and fake_dir must both be set, or both omitted.")
 
-        self._manual_real: Optional[Path] = Path(real_dir).expanduser().resolve() if real_dir else None
-        self._manual_fake: Optional[Path] = Path(fake_dir).expanduser().resolve() if fake_dir else None
+        self._manual_real: Optional[Path] = (
+            Path(real_dir).expanduser().resolve() if real_dir else None
+        )
+        self._manual_fake: Optional[Path] = (
+            Path(fake_dir).expanduser().resolve() if fake_dir else None
+        )
 
         if partitions is None or list(partitions) == ["all"]:
             self._keys = UNIVFD_DIFFUSION_PARTITIONS
@@ -111,6 +117,7 @@ class UnivFDDataset(BaseDataset):
 
         if not real_dir.is_dir():
             import gdown
+
             archive = self.root / f"{key}.tar.gz"
             if not archive.is_file():
                 gdown.download_folder(
@@ -126,10 +133,9 @@ class UnivFDDataset(BaseDataset):
     def _load_all(self) -> List[DatasetItem]:
         if self._manual_real is not None:
             meta_key = self.partitions[0] if len(self.partitions) == 1 else "manual"
-            return (
-                _collect_images(self._manual_real, label=0, partition=meta_key)
-                + _collect_images(self._manual_fake, label=1, partition=meta_key)
-            )
+            return _collect_images(
+                self._manual_real, label=0, partition=meta_key
+            ) + _collect_images(self._manual_fake, label=1, partition=meta_key)
 
         items: List[DatasetItem] = []
         for key in self._keys:

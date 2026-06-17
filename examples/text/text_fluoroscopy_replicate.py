@@ -158,14 +158,37 @@ class TextFluoroscopyJsonDataset(BaseDataset):
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--files", nargs="+", required=True, metavar="NAME", help="Exact processed_data/*.json basename(s) from the Text-Fluoroscopy repo.")
-    p.add_argument("--force-download", action="store_true", help="Re-download even if cache exists.")
-    p.add_argument("--max-samples", type=int, default=None, help="Cap items per file (default: all).")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--files",
+        nargs="+",
+        required=True,
+        metavar="NAME",
+        help="Exact processed_data/*.json basename(s) from the Text-Fluoroscopy repo.",
+    )
+    p.add_argument(
+        "--force-download", action="store_true", help="Re-download even if cache exists."
+    )
+    p.add_argument(
+        "--max-samples", type=int, default=None, help="Cap items per file (default: all)."
+    )
     p.add_argument("--device", type=str, default="cuda", help="Device for detectors.")
-    p.add_argument("--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names.")
-    p.add_argument("--output-dir", type=Path, default=Path("experiments"), help="Directory for result JSON files.")
-    p.add_argument("--save-scores", action="store_true", help="Store per-sample labels and scores in the output JSON.")
+    p.add_argument(
+        "--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names."
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("experiments"),
+        help="Directory for result JSON files.",
+    )
+    p.add_argument(
+        "--save-scores",
+        action="store_true",
+        help="Store per-sample labels and scores in the output JSON.",
+    )
     return p.parse_args()
 
 
@@ -232,7 +255,9 @@ def main() -> None:
         out_path = args.output_dir / f"text_fluoroscopy__{stem}__{ts}.json"
         evaluator = BenchmarkEvaluator(dataset)
         try:
-            evaluator.run_and_save(detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True)
+            evaluator.run_and_save(
+                detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True
+            )
             print(f"  results -> {out_path}")
         except Exception:
             print(f"  [ERROR] evaluation failed for {filename}")

@@ -65,8 +65,7 @@ class TOCSINDetector(BaseTextDetector):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(model_name=model_name, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(model_name=model_name, threshold=threshold, device=device, **kwargs)
         self.bart_model_name = bart_model
         self.n_copies = n_copies
         self.deletion_rate = deletion_rate
@@ -82,9 +81,9 @@ class TOCSINDetector(BaseTextDetector):
 
         logger.info("Loading BART model '%s' for BARTScore …", self.bart_model_name)
         self._bart_tokenizer = AutoTokenizer.from_pretrained(self.bart_model_name)
-        self._bart_model = AutoModelForSeq2SeqLM.from_pretrained(
-            self.bart_model_name
-        ).to(self._device)
+        self._bart_model = AutoModelForSeq2SeqLM.from_pretrained(self.bart_model_name).to(
+            self._device
+        )
         self._bart_model.eval()
 
     @property
@@ -115,10 +114,16 @@ class TOCSINDetector(BaseTextDetector):
     def _bart_score(self, source: str, target: str) -> float:
         """BARTScore: avg token log-prob of *target* given *source*."""
         src_enc = self.bart_tokenizer(
-            source, return_tensors="pt", truncation=True, max_length=1024,
+            source,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024,
         ).to(self._device)
         tgt_enc = self.bart_tokenizer(
-            target, return_tensors="pt", truncation=True, max_length=1024,
+            target,
+            return_tensors="pt",
+            truncation=True,
+            max_length=1024,
         )
         labels = tgt_enc["input_ids"].to(self._device)
 

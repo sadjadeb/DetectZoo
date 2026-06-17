@@ -204,18 +204,10 @@ class HtrgGraphAttentionLayer(nn.Module):
         att_map = self._pairwise_mul_nodes(x)
         att_map = torch.tanh(self.att_proj(att_map))
         att_board = torch.zeros_like(att_map[:, :, :, 0]).unsqueeze(-1)
-        att_board[:, :n1, :n1, :] = torch.matmul(
-            att_map[:, :n1, :n1, :], self.att_weight11
-        )
-        att_board[:, n1:, n1:, :] = torch.matmul(
-            att_map[:, n1:, n1:, :], self.att_weight22
-        )
-        att_board[:, :n1, n1:, :] = torch.matmul(
-            att_map[:, :n1, n1:, :], self.att_weight12
-        )
-        att_board[:, n1:, :n1, :] = torch.matmul(
-            att_map[:, n1:, :n1, :], self.att_weight12
-        )
+        att_board[:, :n1, :n1, :] = torch.matmul(att_map[:, :n1, :n1, :], self.att_weight11)
+        att_board[:, n1:, n1:, :] = torch.matmul(att_map[:, n1:, n1:, :], self.att_weight22)
+        att_board[:, :n1, n1:, :] = torch.matmul(att_map[:, :n1, n1:, :], self.att_weight12)
+        att_board[:, n1:, :n1, :] = torch.matmul(att_map[:, n1:, :n1, :], self.att_weight12)
         att_map = att_board / self.temp
         return F.softmax(att_map, dim=-2)
 
@@ -224,12 +216,8 @@ class HtrgGraphAttentionLayer(nn.Module):
         x2 = self.proj_without_att(x)
         return x1 + x2
 
-    def _project_master(
-        self, x: Tensor, master: Tensor, att_map: Tensor
-    ) -> Tensor:
-        x1 = self.proj_with_attM(
-            torch.matmul(att_map.squeeze(-1).unsqueeze(1), x)
-        )
+    def _project_master(self, x: Tensor, master: Tensor, att_map: Tensor) -> Tensor:
+        x1 = self.proj_with_attM(torch.matmul(att_map.squeeze(-1).unsqueeze(1), x))
         x2 = self.proj_without_attM(master)
         return x1 + x2
 
@@ -296,9 +284,7 @@ class CONV(nn.Module):
     ) -> None:
         super().__init__()
         if in_channels != 1:
-            raise ValueError(
-                f"SincConv only supports one input channel (got {in_channels})"
-            )
+            raise ValueError(f"SincConv only supports one input channel (got {in_channels})")
         if bias:
             raise ValueError("SincConv does not support bias.")
         if groups > 1:
@@ -319,9 +305,7 @@ class CONV(nn.Module):
         bands_hz = self.to_hz(bands_mel)
 
         self.mel = bands_hz
-        self.hsupp = torch.arange(
-            -(self.kernel_size - 1) / 2, (self.kernel_size - 1) / 2 + 1
-        )
+        self.hsupp = torch.arange(-(self.kernel_size - 1) / 2, (self.kernel_size - 1) / 2 + 1)
         self.band_pass = torch.zeros(self.out_channels, self.kernel_size)
         for i in range(len(self.mel) - 1):
             fmin, fmax = self.mel[i], self.mel[i + 1]
@@ -331,16 +315,14 @@ class CONV(nn.Module):
             h_low = (2 * fmin / self.sample_rate) * np.sinc(
                 2 * fmin * self.hsupp / self.sample_rate
             )
-            self.band_pass[i, :] = Tensor(np.hamming(self.kernel_size)) * Tensor(
-                h_high - h_low
-            )
+            self.band_pass[i, :] = Tensor(np.hamming(self.kernel_size)) * Tensor(h_high - h_low)
 
     def forward(self, x: Tensor, mask: bool = False) -> Tensor:
         bp = self.band_pass.clone().to(x.device)
         if mask:
             a = int(np.random.uniform(0, 20))
             a0 = random.randint(0, bp.shape[0] - a)
-            bp[a0:a0 + a, :] = 0
+            bp[a0 : a0 + a, :] = 0
         self.filters = bp.view(self.out_channels, 1, self.kernel_size)
         return F.conv1d(
             x,
@@ -493,26 +475,18 @@ class Model(nn.Module):
         gat_T = self.GAT_layer_T(e_T)
         out_T = self.pool_T(gat_T)
 
-        out_T1, out_S1, master1 = self.HtrgGAT_layer_ST11(
-            out_T, out_S, master=self.master1
-        )
+        out_T1, out_S1, master1 = self.HtrgGAT_layer_ST11(out_T, out_S, master=self.master1)
         out_S1 = self.pool_hS1(out_S1)
         out_T1 = self.pool_hT1(out_T1)
-        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST12(
-            out_T1, out_S1, master=master1
-        )
+        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST12(out_T1, out_S1, master=master1)
         out_T1 = out_T1 + out_T_aug
         out_S1 = out_S1 + out_S_aug
         master1 = master1 + master_aug
 
-        out_T2, out_S2, master2 = self.HtrgGAT_layer_ST21(
-            out_T, out_S, master=self.master2
-        )
+        out_T2, out_S2, master2 = self.HtrgGAT_layer_ST21(out_T, out_S, master=self.master2)
         out_S2 = self.pool_hS2(out_S2)
         out_T2 = self.pool_hT2(out_T2)
-        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST22(
-            out_T2, out_S2, master=master2
-        )
+        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST22(out_T2, out_S2, master=master2)
         out_T2 = out_T2 + out_T_aug
         out_S2 = out_S2 + out_S_aug
         master2 = master2 + master_aug
@@ -533,9 +507,7 @@ class Model(nn.Module):
         s_max, _ = torch.max(torch.abs(out_S), dim=1)
         s_avg = torch.mean(out_S, dim=1)
 
-        last_hidden = torch.cat(
-            [t_max, t_avg, s_max, s_avg, master.squeeze(1)], dim=1
-        )
+        last_hidden = torch.cat([t_max, t_avg, s_max, s_avg, master.squeeze(1)], dim=1)
         last_hidden = self.drop(last_hidden)
         return last_hidden, self.out_layer(last_hidden)
 
@@ -569,19 +541,23 @@ def _register_pickle_shim() -> None:
 # Audio helpers (mirror other audio detectors for consistency)
 # ---------------------------------------------------------------------------
 
+
 def _load_audio(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> torch.Tensor:
     """Load audio → mono float32 [T] at ``target_sr``."""
     try:
         import torchaudio
+
         wav, sr = torchaudio.load(str(path))
         if sr != target_sr:
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     except Exception:
         import soundfile as sf
+
         data, sr = sf.read(str(path), always_2d=True)
         wav = torch.from_numpy(data.T.astype(np.float32))
         if sr != target_sr:
             import torchaudio
+
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)
@@ -715,9 +691,7 @@ class SAMODetector(BaseDetector):
         speaker_audio: dict[str, list[Path]] = {}
         for protocol in protocols:
             if not protocol.is_file():
-                raise FileNotFoundError(
-                    f"ASVspoof enrolment protocol not found: {protocol}"
-                )
+                raise FileNotFoundError(f"ASVspoof enrolment protocol not found: {protocol}")
             with open(protocol, "r", encoding="utf-8") as fh:
                 for raw_line in fh:
                     line = raw_line.strip()
@@ -737,9 +711,7 @@ class SAMODetector(BaseDetector):
                         speaker_audio.setdefault(spk_id, []).append(flac_path)
 
         if not speaker_audio:
-            raise RuntimeError(
-                f"No enrolment utterances found under {protocol_dir}"
-            )
+            raise RuntimeError(f"No enrolment utterances found under {protocol_dir}")
         return speaker_audio
 
     def _load_checkpoint(self) -> nn.Module:
@@ -747,13 +719,9 @@ class SAMODetector(BaseDetector):
         _register_pickle_shim()
 
         try:
-            obj = torch.load(
-                self._weight_path, map_location="cpu", weights_only=True
-            )
+            obj = torch.load(self._weight_path, map_location="cpu", weights_only=True)
         except Exception:
-            obj = torch.load(
-                self._weight_path, map_location="cpu", weights_only=False
-            )
+            obj = torch.load(self._weight_path, map_location="cpu", weights_only=False)
 
         if isinstance(obj, nn.Module):
             return obj
@@ -767,14 +735,10 @@ class SAMODetector(BaseDetector):
             model = Model(_MODEL_CONFIG)
             missing, unexpected = model.load_state_dict(obj, strict=False)
             if missing:
-                raise RuntimeError(
-                    f"SAMO checkpoint missing keys: {missing[:5]} …"
-                )
+                raise RuntimeError(f"SAMO checkpoint missing keys: {missing[:5]} …")
             return model
 
-        raise RuntimeError(
-            f"Unexpected SAMO checkpoint type: {type(obj).__name__}"
-        )
+        raise RuntimeError(f"Unexpected SAMO checkpoint type: {type(obj).__name__}")
 
     def _normalize_input(self, input_data: Any) -> torch.Tensor:
         """Accept path / numpy / tensor → mono waveform [T] at 16 kHz."""

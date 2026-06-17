@@ -141,18 +141,44 @@ class RAIDDataset(BaseDataset):
     )
 
     MODELS = (
-        "chatgpt", "gpt4", "gpt3", "gpt2",
-        "llama-chat", "mistral", "mistral-chat",
-        "mpt", "mpt-chat", "cohere", "cohere-chat", "human",
+        "chatgpt",
+        "gpt4",
+        "gpt3",
+        "gpt2",
+        "llama-chat",
+        "mistral",
+        "mistral-chat",
+        "mpt",
+        "mpt-chat",
+        "cohere",
+        "cohere-chat",
+        "human",
     )
     DOMAINS = (
-        "abstracts", "books", "code", "czech", "german",
-        "news", "poetry", "recipes", "reddit", "reviews", "wiki",
+        "abstracts",
+        "books",
+        "code",
+        "czech",
+        "german",
+        "news",
+        "poetry",
+        "recipes",
+        "reddit",
+        "reviews",
+        "wiki",
     )
     ATTACKS = (
-        "none", "homoglyph", "number", "article_deletion",
-        "insert_paragraphs", "perplexity_misspelling", "upper_lower",
-        "whitespace", "zero_width_space", "synonym", "paraphrase",
+        "none",
+        "homoglyph",
+        "number",
+        "article_deletion",
+        "insert_paragraphs",
+        "perplexity_misspelling",
+        "upper_lower",
+        "whitespace",
+        "zero_width_space",
+        "synonym",
+        "paraphrase",
         "alternative_spelling",
     )
     SPLITS = ("train", "test", "test_new", "test_attack")

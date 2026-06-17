@@ -99,6 +99,7 @@ _HIDDEN_SIZE = 1920
 # Detector wrapper
 # ---------------------------------------------------------------------------
 
+
 @register_detector(
     "anti_deepfake_xlsr2b",
     aliases=["nii_xlsr2b", "xlsr_2b"],
@@ -196,9 +197,7 @@ class AntiDeepfakeXLSR2BDetector(BaseDetector):
             16 kHz internally; arbitrary lengths are accepted.
         """
         wav = self._normalize_input(input_data)
-        score_ai, score_human, logits = run_inference(
-            self._model, wav, self._device
-        )
+        score_ai, score_human, logits = run_inference(self._model, wav, self._device)
 
         return self._make_result(
             score_ai,

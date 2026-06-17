@@ -94,9 +94,14 @@ def _contrastive_loss(
 
     Positive pairs share the same label; negatives differ.
     """
-    sim = F.cosine_similarity(
-        embeddings.unsqueeze(1), embeddings.unsqueeze(0), dim=-1,
-    ) / temperature
+    sim = (
+        F.cosine_similarity(
+            embeddings.unsqueeze(1),
+            embeddings.unsqueeze(0),
+            dim=-1,
+        )
+        / temperature
+    )
     batch = embeddings.size(0)
     mask_pos = labels.unsqueeze(1) == labels.unsqueeze(0)
     mask_self = torch.eye(batch, dtype=torch.bool, device=embeddings.device)
@@ -181,20 +186,24 @@ class _OODTextBase(BaseTextDetector):
                 repo_id = _DETECTIVE_CHECKPOINTS[checkpoint]
                 try:
                     from huggingface_hub import hf_hub_download
+
                     ckpt_path = hf_hub_download(
                         repo_id=repo_id,
                         filename=checkpoint,
                     )
                 except Exception as exc:
                     logger.warning(
-                        "Could not download DeTeCtive checkpoint '%s' "
-                        "from %s: %s", checkpoint, repo_id, exc,
+                        "Could not download DeTeCtive checkpoint '%s' from %s: %s",
+                        checkpoint,
+                        repo_id,
+                        exc,
                     )
                     return
             else:
                 logger.warning(
                     "DeTeCtive checkpoint '%s' not found locally and is not "
-                    "a known official checkpoint. Skipping.", checkpoint,
+                    "a known official checkpoint. Skipping.",
+                    checkpoint,
                 )
                 return
 
@@ -204,9 +213,9 @@ class _OODTextBase(BaseTextDetector):
         enc_state: dict[str, Any] = {}
         for key, val in state_dict.items():
             if key.startswith("model.model."):
-                enc_state[key[len("model.model."):]] = val
+                enc_state[key[len("model.model.") :]] = val
             elif key.startswith("model."):
-                enc_state[key[len("model."):]] = val
+                enc_state[key[len("model.") :]] = val
 
         if enc_state:
             missing, unexpected = self.enc_model.load_state_dict(enc_state, strict=False)
@@ -289,8 +298,7 @@ class DSVDDDetector(_OODTextBase):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(encoder_model=encoder_model, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(encoder_model=encoder_model, threshold=threshold, device=device, **kwargs)
         self._center: torch.Tensor | None = None
         if center is not None:
             self._center = torch.tensor(center, dtype=torch.float32)
@@ -371,7 +379,7 @@ class DSVDDDetector(_OODTextBase):
             total_loss = 0.0
             n_batches = 0
             for start in range(0, len(all_texts), batch_size):
-                idx = perm[start:start + batch_size]
+                idx = perm[start : start + batch_size]
                 batch_texts = [all_texts[i] for i in idx]
                 batch_labels = torch.tensor([all_labels[i] for i in idx], device=self._device)
 
@@ -396,22 +404,29 @@ class DSVDDDetector(_OODTextBase):
                 total_loss += float(loss)
                 n_batches += 1
 
-            logger.info("Epoch %d/%d — loss %.4f", epoch + 1, epochs,
-                        total_loss / max(n_batches, 1))
+            logger.info(
+                "Epoch %d/%d — loss %.4f", epoch + 1, epochs, total_loss / max(n_batches, 1)
+            )
 
         self.enc_model.eval()
         if save_path is not None:
-            torch.save({
-                "encoder": self.enc_model.state_dict(),
-                "center": self._center,
-            }, save_path)
+            torch.save(
+                {
+                    "encoder": self.enc_model.state_dict(),
+                    "center": self._center,
+                },
+                save_path,
+            )
             logger.info("Saved D-SVDD checkpoint to '%s'", save_path)
 
     def _embed_no_grad_off(self, text: str) -> torch.Tensor:
         """Embed with gradient tracking (for training)."""
         enc = self.enc_tokenizer(
-            text, return_tensors="pt", truncation=True,
-            max_length=self.max_length, padding="max_length",
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
+            padding="max_length",
         ).to(self._device)
         out = self.enc_model(**enc)
         mask = enc["attention_mask"].unsqueeze(-1).float()
@@ -465,8 +480,7 @@ class HRNDetector(_OODTextBase):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(encoder_model=encoder_model, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(encoder_model=encoder_model, threshold=threshold, device=device, **kwargs)
         self.gp_lambda = gp_lambda
         self.gp_power = gp_power
         self._classifiers: nn.ModuleList | None = None
@@ -483,10 +497,12 @@ class HRNDetector(_OODTextBase):
         return getattr(cfg, "hidden_size", 768)
 
     def _init_classifiers(self, n: int, embed_dim: int) -> None:
-        self._classifiers = nn.ModuleList([
-            _ClassificationHead(embed_dim, 1, activation="relu").to(self._device)
-            for _ in range(n)
-        ])
+        self._classifiers = nn.ModuleList(
+            [
+                _ClassificationHead(embed_dim, 1, activation="relu").to(self._device)
+                for _ in range(n)
+            ]
+        )
 
     def _load_checkpoint(self, path: str) -> None:
         state = torch.load(path, map_location=self._device, weights_only=False)
@@ -560,8 +576,9 @@ class HRNDetector(_OODTextBase):
             self.enc_model.eval()
 
         for i, model_name in enumerate(model_names):
-            logger.info("Training HRN classifier %d/%d for '%s' …",
-                        i + 1, len(model_names), model_name)
+            logger.info(
+                "Training HRN classifier %d/%d for '%s' …", i + 1, len(model_names), model_name
+            )
             clf = self._classifiers[i]
             optimizer = torch.optim.Adam(clf.parameters(), lr=lr, betas=(0.9, 0.98))
 
@@ -575,10 +592,9 @@ class HRNDetector(_OODTextBase):
                 total_loss = 0.0
                 n_batches = 0
                 for start in range(0, len(all_texts), batch_size):
-                    idx = perm[start:start + batch_size]
+                    idx = perm[start : start + batch_size]
                     batch_texts = [all_texts[j] for j in idx]
-                    batch_labels = torch.tensor([all_labels[j] for j in idx],
-                                                device=self._device)
+                    batch_labels = torch.tensor([all_labels[j] for j in idx], device=self._device)
                     with torch.no_grad():
                         embs = self._embed_batch(batch_texts)
 
@@ -606,28 +622,40 @@ class HRNDetector(_OODTextBase):
                     total_loss += float(loss)
                     n_batches += 1
 
-                logger.info("  [%s] epoch %d/%d — loss %.4f", model_name,
-                            epoch + 1, epochs, total_loss / max(n_batches, 1))
+                logger.info(
+                    "  [%s] epoch %d/%d — loss %.4f",
+                    model_name,
+                    epoch + 1,
+                    epochs,
+                    total_loss / max(n_batches, 1),
+                )
 
         if not freeze_encoder:
             self.enc_model.eval()
         if save_path is not None:
-            torch.save({
-                "encoder": self.enc_model.state_dict(),
-                "classifiers": [c.state_dict() for c in self._classifiers],
-            }, save_path)
+            torch.save(
+                {
+                    "encoder": self.enc_model.state_dict(),
+                    "classifiers": [c.state_dict() for c in self._classifiers],
+                },
+                save_path,
+            )
             logger.info("Saved HRN checkpoint to '%s'", save_path)
 
     def _gradient_penalty(
-        self, clf: _ClassificationHead, real: torch.Tensor,
+        self,
+        clf: _ClassificationHead,
+        real: torch.Tensor,
     ) -> torch.Tensor:
         """WGAN-GP style gradient penalty with ``p=gp_power``."""
         eps = torch.rand(real.size(0), 1, device=real.device)
         interp = (eps * real + (1 - eps) * real).detach().requires_grad_(True)
         out = clf(interp)
         grad = torch.autograd.grad(
-            outputs=out.sum(), inputs=interp,
-            create_graph=True, retain_graph=True,
+            outputs=out.sum(),
+            inputs=interp,
+            create_graph=True,
+            retain_graph=True,
         )[0]
         penalty = ((grad.norm(2, dim=1) - 1) ** self.gp_power).mean()
         return penalty
@@ -683,8 +711,7 @@ class EnergyDetector(_OODTextBase):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(encoder_model=encoder_model, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(encoder_model=encoder_model, threshold=threshold, device=device, **kwargs)
         self.m_in = m_in
         self.m_out = m_out
         self._classifier: _ClassificationHead | None = None
@@ -695,7 +722,9 @@ class EnergyDetector(_OODTextBase):
         elif n_classes > 0:
             embed_dim = self._get_embed_dim()
             self._classifier = _ClassificationHead(
-                embed_dim, n_classes, activation="tanh",
+                embed_dim,
+                n_classes,
+                activation="tanh",
             ).to(self._device)
 
     def _get_embed_dim(self) -> int:
@@ -711,11 +740,12 @@ class EnergyDetector(_OODTextBase):
             in_dim = sd["net.0.weight"].shape[1]
             out_dim = sd["net.4.weight"].shape[0]
             self._classifier = _ClassificationHead(
-                in_dim, out_dim, activation="tanh",
+                in_dim,
+                out_dim,
+                activation="tanh",
             ).to(self._device)
             self._classifier.load_state_dict(sd)
-            logger.info("Loaded Energy classifier (%d classes) from checkpoint",
-                        out_dim)
+            logger.info("Loaded Energy classifier (%d classes) from checkpoint", out_dim)
 
     @torch.no_grad()
     def predict(self, input_data: Any) -> DetectionResult:
@@ -769,7 +799,9 @@ class EnergyDetector(_OODTextBase):
         embed_dim = self._get_embed_dim()
 
         self._classifier = _ClassificationHead(
-            embed_dim, n_classes, activation="tanh",
+            embed_dim,
+            n_classes,
+            activation="tanh",
         ).to(self._device)
 
         self.enc_model.train()
@@ -796,12 +828,10 @@ class EnergyDetector(_OODTextBase):
             total_loss = 0.0
             n_batches = 0
             for start in range(0, len(all_texts), batch_size):
-                idx = perm[start:start + batch_size]
+                idx = perm[start : start + batch_size]
                 batch_texts = [all_texts[i] for i in idx]
-                batch_binary = torch.tensor([all_binary[i] for i in idx],
-                                            device=self._device)
-                batch_class = torch.tensor([all_class[i] for i in idx],
-                                           device=self._device)
+                batch_binary = torch.tensor([all_binary[i] for i in idx], device=self._device)
+                batch_class = torch.tensor([all_class[i] for i in idx], device=self._device)
 
                 embs = torch.stack([self._embed_no_grad_off(t) for t in batch_texts])
 
@@ -820,19 +850,20 @@ class EnergyDetector(_OODTextBase):
                 energy_all = -torch.logsumexp(logits_all, dim=-1)
                 loss_energy = torch.tensor(0.0, device=self._device)
                 if machine_mask.any():
-                    loss_energy = loss_energy + F.relu(
-                        energy_all[machine_mask] - self.m_in
-                    ).pow(2).mean()
+                    loss_energy = (
+                        loss_energy + F.relu(energy_all[machine_mask] - self.m_in).pow(2).mean()
+                    )
                 if human_mask.any():
-                    loss_energy = loss_energy + F.relu(
-                        self.m_out - energy_all[human_mask]
-                    ).pow(2).mean()
+                    loss_energy = (
+                        loss_energy + F.relu(self.m_out - energy_all[human_mask]).pow(2).mean()
+                    )
 
                 # 3) Contrastive loss
                 loss_contrastive = _contrastive_loss(embs, batch_binary)
 
-                loss = (alpha * loss_contrastive
-                        + beta * (loss_classify + energy_weight * loss_energy))
+                loss = alpha * loss_contrastive + beta * (
+                    loss_classify + energy_weight * loss_energy
+                )
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -840,23 +871,30 @@ class EnergyDetector(_OODTextBase):
                 total_loss += float(loss)
                 n_batches += 1
 
-            logger.info("Epoch %d/%d — loss %.4f", epoch + 1, epochs,
-                        total_loss / max(n_batches, 1))
+            logger.info(
+                "Epoch %d/%d — loss %.4f", epoch + 1, epochs, total_loss / max(n_batches, 1)
+            )
 
         self.enc_model.eval()
         self._classifier.eval()
         if save_path is not None:
-            torch.save({
-                "encoder": self.enc_model.state_dict(),
-                "classifier": self._classifier.state_dict(),
-            }, save_path)
+            torch.save(
+                {
+                    "encoder": self.enc_model.state_dict(),
+                    "classifier": self._classifier.state_dict(),
+                },
+                save_path,
+            )
             logger.info("Saved Energy checkpoint to '%s'", save_path)
 
     def _embed_no_grad_off(self, text: str) -> torch.Tensor:
         """Embed with gradient tracking (for training)."""
         enc = self.enc_tokenizer(
-            text, return_tensors="pt", truncation=True,
-            max_length=self.max_length, padding="max_length",
+            text,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
+            padding="max_length",
         ).to(self._device)
         out = self.enc_model(**enc)
         mask = enc["attention_mask"].unsqueeze(-1).float()

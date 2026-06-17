@@ -223,15 +223,19 @@ class _SDV14CoSpyFusion(nn.Module):
 
 
 def _strip_prefix(state: dict[str, torch.Tensor], prefix: str) -> dict[str, torch.Tensor]:
-    return {k[len(prefix):]: v for k, v in state.items() if k.startswith(prefix)}
+    return {k[len(prefix) :]: v for k, v in state.items() if k.startswith(prefix)}
 
 
 def _load_weight_files(model: nn.Module, checkpoint_dir: Path) -> None:
-    sem = torch.load(checkpoint_dir / "semantic_weights.pth", map_location="cpu", weights_only=False)
+    sem = torch.load(
+        checkpoint_dir / "semantic_weights.pth", map_location="cpu", weights_only=False
+    )
     model.sem_fc.weight.data = sem["fc.weight"]
     model.sem_fc.bias.data = sem["fc.bias"]
 
-    art = torch.load(checkpoint_dir / "artifact_weights.pth", map_location="cpu", weights_only=False)
+    art = torch.load(
+        checkpoint_dir / "artifact_weights.pth", map_location="cpu", weights_only=False
+    )
     art_enc_state = _strip_prefix(art, "artifact_encoder.")
     art_fc_state = _strip_prefix(art, "fc.")
     if art_enc_state:
@@ -323,11 +327,13 @@ class CoSpyDetector(BaseDetector):
 
         resize = 256 if variant == "progan" else 384
         crop = 224 if variant == "progan" else 384
-        self._transform = transforms.Compose([
-            transforms.Resize(resize),
-            transforms.CenterCrop(crop),
-            transforms.ToTensor(),
-        ])
+        self._transform = transforms.Compose(
+            [
+                transforms.Resize(resize),
+                transforms.CenterCrop(crop),
+                transforms.ToTensor(),
+            ]
+        )
 
     def _normalize_input(self, input_data: Any) -> Image.Image:
         if hasattr(input_data, "mode") and hasattr(input_data, "convert"):
@@ -336,8 +342,7 @@ class CoSpyDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     @torch.no_grad()

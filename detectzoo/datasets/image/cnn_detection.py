@@ -13,8 +13,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
-from detectzoo.datasets.base import BaseDataset, DatasetItem
 from detectzoo.core.registry import register_dataset
+from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _SPLITS: Tuple[str, ...] = ("train", "val", "test")
 SPLIT_TRAIN, SPLIT_VAL, SPLIT_TEST = _SPLITS
@@ -58,9 +58,26 @@ _COLUMN_TO_FOLDER: dict[str, str] = {c: f for c, f in CNN_DETECTION_TEST_PARTITI
 _FOLDER_TO_COLUMN: dict[str, str] = {f: c for c, f in CNN_DETECTION_TEST_PARTITIONS}
 
 _PROGAN_CLASS_FOLDERS: Tuple[str, ...] = (
-    "airplane", "bird", "bicycle", "boat", "bottle", "bus", "car", "cat", "cow", "chair",
-    "diningtable", "dog", "person", "pottedplant", "motorbike", "tvmonitor", "train", "sheep",
-    "sofa", "horse",
+    "airplane",
+    "bird",
+    "bicycle",
+    "boat",
+    "bottle",
+    "bus",
+    "car",
+    "cat",
+    "cow",
+    "chair",
+    "diningtable",
+    "dog",
+    "person",
+    "pottedplant",
+    "motorbike",
+    "tvmonitor",
+    "train",
+    "sheep",
+    "sofa",
+    "horse",
 )
 
 _IMAGE_EXTS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"})
@@ -130,7 +147,11 @@ def _collect_test(data_root: Path, col: str, folder: str) -> List[DatasetItem]:
         for label, directory, source in ((0, real_dir, "real"), (1, fake_dir, "fake")):
             for path in sorted(directory.rglob("*")):
                 if path.is_file() and path.suffix.lower() in _IMAGE_EXTS:
-                    out.append(DatasetItem(data=str(path), label=label, metadata={**meta, "source": source}))
+                    out.append(
+                        DatasetItem(
+                            data=str(path), label=label, metadata={**meta, "source": source}
+                        )
+                    )
 
     return out
 

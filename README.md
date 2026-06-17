@@ -28,13 +28,13 @@ cd detectzoo
 pip install -e .
 ```
 
-Optional extras:
+Optional extra for contributors (`pytest`, `pytest-cov`, `ruff`):
 
 ```bash
-pip install -e ".[image,audio]"      # everything for image + audio detectors
-pip install detectzoo[datasets]     # when you need ModelScope / gdown-based downloads
-pip install -e ".[dev]"             # contributors
+pip install -e ".[dev]"
 ```
+
+The base install already includes dependencies for text, image, and audio detectors.
 
 ---
 
@@ -227,16 +227,42 @@ The detector is then immediately available via `load_detector("my_detector")`. S
 
 ## Examples
 
-The `examples/` directory contains self-contained scripts you can run immediately:
+The `examples/` directory contains runnable scripts grouped by modality. Most replication scripts download public benchmark data, run detectors with `BenchmarkEvaluator`, and write metrics under `experiments/`.
+
+### Getting started
 
 | Script | Description |
 |--------|-------------|
-| `text_detection.py` | Compare text detectors (log-likelihood, log-rank, entropy, fast-detectgpt) on sample human and AI passages. |
+| [custom_detector.py](examples/custom_detector.py) | Create, register, and use a toy custom text detector (`word_length`). |
 
-Run any example from the project root:
+### Replication scripts
+
+| Script | Description |
+|--------|-------------|
+| [text/ood_replicate.py](examples/text/ood_replicate.py) | Replicate OOD paper baselines on the labeled RAID test split (default 1000 samples). |
+| [text/gecscore_replicate.py](examples/text/gecscore_replicate.py) | Replicate GECScore baselines on released `normal_data` JSON files (per source × generator model). |
+| [text/imbd_replicate.py](examples/text/imbd_replicate.py) | Replicate ImBD baselines on released rewrite/paraphrase JSON (human `original` vs AI `rewritten`). |
+| [text/text_fluoroscopy_replicate.py](examples/text/text_fluoroscopy_replicate.py) | Replicate Text-Fluoroscopy baselines on processed JSON files from the authors' repo. |
+| [image/image_replicate.py](examples/image/image_replicate.py) | Run image detectors on built-in datasets (`self_synthesis`, `aigcdetect`, `cnn_detection`, `genimage`, `univfd_diffusion`) and save benchmark JSON. |
+| [audio/audio_replicate.py](examples/audio/audio_replicate.py) | Run audio detectors on built-in benchmarks (`asvspoof2019`, `for`, `in_the_wild`, `deepfake_eval_2024`) with balanced sampling. |
+
+Run from the project root:
 
 ```bash
-python examples/text_detection.py --device cuda
+# Quick start — no downloads
+python examples/custom_detector.py
+
+# Text replication (OOD on RAID)
+python examples/text/ood_replicate.py --device cuda --max-samples 100
+
+# Image replication
+python examples/image/image_replicate.py \
+    --dataset self_synthesis \
+    --partitions AttGAN BEGAN \
+    --detectors cnnspot patchcraft univfd
+
+# Audio replication
+python examples/audio/audio_replicate.py --dataset in_the_wild --detectors rawnet2 aasist
 ```
 
 ---

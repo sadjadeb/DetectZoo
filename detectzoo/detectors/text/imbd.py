@@ -101,8 +101,9 @@ class ImBDDetector(BaseTextDetector):
         if self.use_peft:
             from peft import PeftModel
 
-            base_model = AutoModelForCausalLM.from_pretrained(self.base_model_name,
-                                                              device_map=self._device)
+            base_model = AutoModelForCausalLM.from_pretrained(
+                self.base_model_name, device_map=self._device
+            )
 
             self._model = PeftModel.from_pretrained(
                 base_model,

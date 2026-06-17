@@ -19,7 +19,7 @@ from detectzoo.core.registry import register_dataset
 from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _GDRIVE_FILE_ID = "1QLYJMhy0CbBVT01BLkkw7KPPL5BpmxnH"
-_ZIP_NAME       = "chameleon.zip"
+_ZIP_NAME = "chameleon.zip"
 
 _IMAGE_EXTS = frozenset({".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff"})
 
@@ -45,7 +45,7 @@ class ChameleonDataset(BaseDataset):
         Root cache directory (default ``.detectzoo_data``).
     """
 
-    name: str     = "chameleon"
+    name: str = "chameleon"
     modality: str = "image"
 
     def __init__(
@@ -56,7 +56,7 @@ class ChameleonDataset(BaseDataset):
         **kwargs: Any,
     ) -> None:
         super().__init__(**kwargs)
-        self.root      = Path(root) if root is not None else None
+        self.root = Path(root) if root is not None else None
         self.cache_dir = cache_dir
 
     def _ensure_download(self) -> Path:
@@ -74,7 +74,7 @@ class ChameleonDataset(BaseDataset):
             return found
 
         import gdown
-        
+
         zip_path = dest / _ZIP_NAME
         if not zip_path.is_file():
             gdown.download(
@@ -98,15 +98,18 @@ class ChameleonDataset(BaseDataset):
 
     def _load_all(self) -> List[DatasetItem]:
         test_root = self._ensure_download()
-        real_dir  = test_root / "0_real"
-        fake_dir  = test_root / "1_fake"
-        meta      = {"source_dataset": "chameleon", "split": "test"}
+        real_dir = test_root / "0_real"
+        fake_dir = test_root / "1_fake"
+        meta = {"source_dataset": "chameleon", "split": "test"}
         items: List[DatasetItem] = []
         for label, directory, source in ((0, real_dir, "real"), (1, fake_dir, "fake")):
             for path in sorted(directory.rglob("*")):
                 if path.is_file() and path.suffix.lower() in _IMAGE_EXTS:
-                    items.append(DatasetItem(
-                        data=str(path), label=label,
-                        metadata={**meta, "source": source},
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=str(path),
+                            label=label,
+                            metadata={**meta, "source": source},
+                        )
+                    )
         return items

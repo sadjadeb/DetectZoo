@@ -116,14 +116,16 @@ class CHEATDataset(BaseDataset):
         with open(fp, encoding="utf-8") as fh:
             for line in fh:
                 row: dict[str, Any] = json.loads(line)
-                items.append(DatasetItem(
-                    data=row["abstract"],
-                    label=label,
-                    metadata={
-                        "category": category,
-                        "title": row.get("title", ""),
-                    },
-                ))
+                items.append(
+                    DatasetItem(
+                        data=row["abstract"],
+                        label=label,
+                        metadata={
+                            "category": category,
+                            "title": row.get("title", ""),
+                        },
+                    )
+                )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

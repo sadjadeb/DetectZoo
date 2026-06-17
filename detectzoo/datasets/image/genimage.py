@@ -55,7 +55,7 @@ def _find_split_dirs(part_dir: Path, split: str) -> Optional[Tuple[Path, Path]]:
         ai = candidate / "ai"
         nature = candidate / "nature"
         if ai.is_dir() and nature.is_dir():
-            return nature, ai   # (real=nature, fake=ai)
+            return nature, ai  # (real=nature, fake=ai)
     return None
 
 
@@ -91,6 +91,7 @@ def _try_snapshot_download_hf(dest: Path, *, partition: str, force: bool) -> Non
 # ---------------------------------------------------------------------------
 # Dataset
 # ---------------------------------------------------------------------------
+
 
 @register_dataset("genimage", aliases=["gen_image", "genimage_dataset"])
 class GenImageDataset(BaseDataset):
@@ -146,7 +147,11 @@ class GenImageDataset(BaseDataset):
     def _ensure_download(self, partition: str) -> Tuple[Path, Path]:
         from detectzoo.datasets._download import get_cache_dir
 
-        base = self.root.resolve() if self.root is not None else get_cache_dir("genimage", self.cache_dir)
+        base = (
+            self.root.resolve()
+            if self.root is not None
+            else get_cache_dir("genimage", self.cache_dir)
+        )
         part_dir = base / partition
         part_dir.mkdir(parents=True, exist_ok=True)
 
@@ -180,6 +185,9 @@ class GenImageDataset(BaseDataset):
             for label, directory, source in ((0, real_dir, "real"), (1, fake_dir, "fake")):
                 for path in sorted(directory.rglob("*")):
                     if path.is_file() and path.suffix.lower() in _IMAGE_EXTS:
-                        items.append(DatasetItem(data=str(path), label=label,
-                                                 metadata={**meta, "source": source}))
+                        items.append(
+                            DatasetItem(
+                                data=str(path), label=label, metadata={**meta, "source": source}
+                            )
+                        )
         return items

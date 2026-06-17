@@ -127,9 +127,7 @@ def _load_from_metadata(
     meta_path = _find_metadata_csv(root)
     audio_dir = root / _AUDIO_SUBDIR
     if not audio_dir.is_dir():
-        raise FileNotFoundError(
-            f"Deepfake-Eval-2024: expected audio directory {audio_dir}"
-        )
+        raise FileNotFoundError(f"Deepfake-Eval-2024: expected audio directory {audio_dir}")
 
     items: List[DatasetItem] = []
     missing: List[str] = []
@@ -161,8 +159,7 @@ def _load_from_metadata(
                 if skip_missing:
                     continue
                 raise FileNotFoundError(
-                    f"Deepfake-Eval-2024: audio missing for {filename!r} "
-                    f"(looked under {audio_dir})"
+                    f"Deepfake-Eval-2024: audio missing for {filename!r} (looked under {audio_dir})"
                 )
 
             meta: dict[str, Any] = {
@@ -182,8 +179,7 @@ def _load_from_metadata(
 
     if not items:
         raise RuntimeError(
-            f"Deepfake-Eval-2024: no labelled audio loaded from {meta_path} "
-            f"(split={split!r})."
+            f"Deepfake-Eval-2024: no labelled audio loaded from {meta_path} (split={split!r})."
         )
     if missing and skip_missing:
         from detectzoo.utils.logger import get_logger

@@ -84,9 +84,13 @@ class AerobladeDetector(BaseDetector):
         **kwargs: Any,
     ) -> None:
         super().__init__(threshold=threshold, device=device, **kwargs)
-        self.repo_ids: List[str] = list(repo_ids) if repo_ids is not None else [
-            "CompVis/stable-diffusion-v1-1",
-        ]
+        self.repo_ids: List[str] = (
+            list(repo_ids)
+            if repo_ids is not None
+            else [
+                "CompVis/stable-diffusion-v1-1",
+            ]
+        )
 
         self.lpips_vgg_index = lpips_vgg_index
         self.use_fp16 = bool(use_fp16) and str(device).startswith("cuda")
@@ -182,8 +186,7 @@ class AerobladeDetector(BaseDetector):
         if path.is_file():
             return load_image(path)
         raise TypeError(
-            "Expected a PIL Image or a path to an image file; got "
-            f"{type(input_data).__name__}."
+            f"Expected a PIL Image or a path to an image file; got {type(input_data).__name__}."
         )
 
     # ------------------------------------------------------------------

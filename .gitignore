@@ -71,10 +71,3 @@ scripts/smoke_*
 scripts/diag_*
 scripts/scratch_*
 scripts/local/
-
-
-# Temporarily excluded dataset modules
-tests/
-maura/
-examples/
-print_repro_results/

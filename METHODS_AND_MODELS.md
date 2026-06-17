@@ -188,3 +188,5 @@ Datasets integrate with `load_dataset(name, ...)` (see registry via `list_datase
 | FoR | `FoRDataset` | Fake-or-Real speech corpus covering a range of TTS and voice conversion systems. Registry: `for`. | Official website |
 | In-the-Wild | `InTheWildDataset` | Celebrity / politician audio from online video (Müller et al., 2022); ~31.8k clips. Registry: `in_the_wild`. | Hugging Face (`mueller91/In-The-Wild`) |
 | Deepfake-Eval-2024 | `DeepfakeEval2024Dataset` | Social-media / TrueMedia.org deepfakes (2024); audio split ~40k clips. Registry: `deepfake_eval_2024`. | Hugging Face (`nuriachandra/Deepfake-Eval-2024`, gated) |
+
+* Note: the `DeepfakeEval2024Dataset` is gated on Hugging Face. You must first request access to the dataset from Hugging Face.

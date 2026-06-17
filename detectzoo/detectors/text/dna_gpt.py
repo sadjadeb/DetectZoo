@@ -123,9 +123,9 @@ class DNAGPTDetector(BaseTextDetector):
         self._regen_tokenizer = AutoTokenizer.from_pretrained(self.regen_model_name)
         if self._regen_tokenizer.pad_token is None:
             self._regen_tokenizer.pad_token = self._regen_tokenizer.eos_token
-        self._regen_model = AutoModelForCausalLM.from_pretrained(
-            self.regen_model_name
-        ).to(self._device)
+        self._regen_model = AutoModelForCausalLM.from_pretrained(self.regen_model_name).to(
+            self._device
+        )
         self._regen_model.eval()
 
     # ------------------------------------------------------------------
@@ -165,7 +165,9 @@ class DNAGPTDetector(BaseTextDetector):
                 return decoded
             logger.debug(
                 "DNA-GPT regeneration attempt %d: shortest %d < %d words, retrying.",
-                attempt + 1, m, self.min_words,
+                attempt + 1,
+                m,
+                self.min_words,
             )
         return decoded  # last attempt, even if still too short
 

@@ -216,31 +216,35 @@ class M4Dataset(BaseDataset):
                 if self.include_human:
                     human_text = _as_text_field(row.get("human_text", ""))
                     if human_text:
-                        items.append(DatasetItem(
-                            data=human_text,
-                            label=0,
-                            metadata={
-                                "domain": domain,
-                                "model": "human",
-                                "source": source,
-                                "source_id": source_id,
-                                "prompt": prompt,
-                            },
-                        ))
+                        items.append(
+                            DatasetItem(
+                                data=human_text,
+                                label=0,
+                                metadata={
+                                    "domain": domain,
+                                    "model": "human",
+                                    "source": source,
+                                    "source_id": source_id,
+                                    "prompt": prompt,
+                                },
+                            )
+                        )
                 if self.include_machine:
                     machine_text = _as_text_field(row.get("machine_text", ""))
                     if machine_text:
-                        items.append(DatasetItem(
-                            data=machine_text,
-                            label=1,
-                            metadata={
-                                "domain": domain,
-                                "model": row_model,
-                                "source": source,
-                                "source_id": source_id,
-                                "prompt": prompt,
-                            },
-                        ))
+                        items.append(
+                            DatasetItem(
+                                data=machine_text,
+                                label=1,
+                                metadata={
+                                    "domain": domain,
+                                    "model": row_model,
+                                    "source": source,
+                                    "source_id": source_id,
+                                    "prompt": prompt,
+                                },
+                            )
+                        )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

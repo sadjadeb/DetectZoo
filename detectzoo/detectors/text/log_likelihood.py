@@ -6,7 +6,7 @@ Reference:
 
 Scores text by average token log-probability under a causal LM.
 Machine-generated text tends to have *higher* average log-prob (lower
-perplexity) than human text, so we use the mean log-probability: 
+perplexity) than human text, so we use the mean log-probability:
 higher score → more likely AI.
 """
 

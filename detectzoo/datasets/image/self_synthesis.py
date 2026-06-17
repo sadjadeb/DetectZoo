@@ -13,9 +13,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
-from detectzoo.datasets.base import BaseDataset, DatasetItem
-from detectzoo.datasets._download import extract_tar_archive
 from detectzoo.core.registry import register_dataset
+from detectzoo.datasets._download import extract_tar_archive
+from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _DEFAULT_GENERATORS: Tuple[str, ...] = (
     "AttGAN",
@@ -93,13 +93,15 @@ class SelfSynthesisDataset(BaseDataset):
             return
 
         try:
-            import gdown  
-        except Exception as e:  
+            import gdown
+        except Exception as e:
             raise ModuleNotFoundError(
                 "Missing dependency `gdown`. Install with `pip install gdown`."
             ) from e
 
-        gdown.download_folder(_GDRIVE_GANGEN_FOLDER, output=str(dest_parent), quiet=False, use_cookies=False)
+        gdown.download_folder(
+            _GDRIVE_GANGEN_FOLDER, output=str(dest_parent), quiet=False, use_cookies=False
+        )
 
         if not self._finalize_gangen_layout(dest_parent, gens):
             raise RuntimeError(

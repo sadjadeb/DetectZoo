@@ -221,7 +221,7 @@ class LastdePPDetector(BaseTextDetector):
         mean_lp = log_likelihood.mean(dim=1)  # [1, S]
         mde = _compute_mde(log_likelihood, self.embed_size, n_bins, self.tau_prime)
         mde = mde.clamp(min=1e-10)
-        return (mean_lp.squeeze(0) / mde)  # [S]
+        return mean_lp.squeeze(0) / mde  # [S]
 
     @torch.no_grad()
     def predict(self, input_data: Any) -> DetectionResult:

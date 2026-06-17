@@ -30,9 +30,9 @@ from detectzoo.datasets._download import get_cache_dir
 from detectzoo.detectors.image.resnet50_binary import load_pytorch_checkpoint
 from detectzoo.utils.io import load_image
 
-_IMAGENET   = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-_CKPT_NAME  = "ForenSynth_LaDeDa.pth"
-_GDRIVE_ID  = "1KxNdnPRJJTuqxmzBPiGsg43tXzO8AN2d" 
+_IMAGENET = dict(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+_CKPT_NAME = "ForenSynth_LaDeDa.pth"
+_GDRIVE_ID = "1KxNdnPRJJTuqxmzBPiGsg43tXzO8AN2d"
 _PATCH_SIZE = 9
 _LOAD_SIZE = 256
 
@@ -41,8 +41,10 @@ _LOAD_SIZE = 256
 # ResNet-50 variant with 9×9 receptive field
 # ---------------------------------------------------------------------------
 
+
 def _conv3x3(inp: int, out: int, stride: int = 1) -> nn.Conv2d:
     return nn.Conv2d(inp, out, 3, stride=stride, padding=0, bias=False)
+
 
 def _conv1x1(inp: int, out: int, stride: int = 1) -> nn.Conv2d:
     return nn.Conv2d(inp, out, 1, stride=stride, bias=False)
@@ -61,12 +63,14 @@ class _Bottleneck(nn.Module):
     ) -> None:
         super().__init__()
         self.conv1 = _conv1x1(inplanes, planes)
-        self.bn1   = nn.BatchNorm2d(planes)
-        self.conv2 = _conv1x1(planes, planes, stride) if use_1x1 else _conv3x3(planes, planes, stride)
-        self.bn2   = nn.BatchNorm2d(planes)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.conv2 = (
+            _conv1x1(planes, planes, stride) if use_1x1 else _conv3x3(planes, planes, stride)
+        )
+        self.bn2 = nn.BatchNorm2d(planes)
         self.conv3 = _conv1x1(planes, planes * 4)
-        self.bn3   = nn.BatchNorm2d(planes * 4)
-        self.relu  = nn.ReLU(inplace=True)
+        self.bn3 = nn.BatchNorm2d(planes * 4)
+        self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -79,9 +83,7 @@ class _Bottleneck(nn.Module):
         if identity.shape[-2:] != out.shape[-2:]:
             diff_h = identity.size(-2) - out.size(-2)
             diff_w = identity.size(-1) - out.size(-1)
-            identity = identity[
-                :, :, : identity.size(-2) - diff_h, : identity.size(-1) - diff_w
-            ]
+            identity = identity[:, :, : identity.size(-2) - diff_h, : identity.size(-1) - diff_w]
         return self.relu(out + identity)
 
 
@@ -92,18 +94,26 @@ class _LaDeDaNet(nn.Module):
         super().__init__()
         self.inplanes = 64
 
-        self.conv1   = _conv1x1(3, 64)
-        self.conv2   = _conv3x3(64, 64)
-        self.bn1     = nn.BatchNorm2d(64, momentum=0.001)
-        self.relu    = nn.ReLU(inplace=True)
+        self.conv1 = _conv1x1(3, 64)
+        self.conv2 = _conv3x3(64, 64)
+        self.bn1 = nn.BatchNorm2d(64, momentum=0.001)
+        self.relu = nn.ReLU(inplace=True)
 
-        self.layer1  = self._make_layer(64,  3, stride=2, first_block_1x1=False, later_blocks_1x1=True)
-        self.layer2  = self._make_layer(128, 4, stride=2, first_block_1x1=False, later_blocks_1x1=True)
-        self.layer3  = self._make_layer(256, 6, stride=2, first_block_1x1=True, later_blocks_1x1=True)
-        self.layer4  = self._make_layer(512, 3, stride=1, first_block_1x1=True, later_blocks_1x1=True)
+        self.layer1 = self._make_layer(
+            64, 3, stride=2, first_block_1x1=False, later_blocks_1x1=True
+        )
+        self.layer2 = self._make_layer(
+            128, 4, stride=2, first_block_1x1=False, later_blocks_1x1=True
+        )
+        self.layer3 = self._make_layer(
+            256, 6, stride=2, first_block_1x1=True, later_blocks_1x1=True
+        )
+        self.layer4 = self._make_layer(
+            512, 3, stride=1, first_block_1x1=True, later_blocks_1x1=True
+        )
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
-        self.fc      = nn.Linear(512 * _Bottleneck.expansion, num_classes)
+        self.fc = nn.Linear(512 * _Bottleneck.expansion, num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -165,7 +175,7 @@ class LaDeDaDetector(BaseDetector):
     patch_size : int
         Local receptive-field size in pixels (default 9, matching the paper).
     load_size : int or None
-        Resize each image to ``load_size × load_size`` before inference.  
+        Resize each image to ``load_size × load_size`` before inference.
         Pass ``None`` to keep the original image size.
     threshold : float
         Decision boundary (default 0.5).
@@ -192,7 +202,7 @@ class LaDeDaDetector(BaseDetector):
         self.patch_size = int(patch_size)
         self.load_size = None if load_size is None else int(load_size)
 
-        cache      = get_cache_dir("ladeda", cache_dir)
+        cache = get_cache_dir("ladeda", cache_dir)
         self._ckpt = (
             Path(checkpoint_path).expanduser().resolve()
             if checkpoint_path is not None
@@ -203,7 +213,7 @@ class LaDeDaDetector(BaseDetector):
             self._ensure_download(cache)
 
         self._model = _LaDeDaNet(num_classes=1)
-        raw   = load_pytorch_checkpoint(self._ckpt, self._device)
+        raw = load_pytorch_checkpoint(self._ckpt, self._device)
         state = raw.get("model", raw) if isinstance(raw, dict) else raw
         state = {k.replace("module.", ""): v for k, v in state.items()}
         self._model.load_state_dict(state, strict=True)
@@ -212,10 +222,12 @@ class LaDeDaDetector(BaseDetector):
         steps: list[Any] = []
         if self.load_size is not None:
             steps.append(transforms.Resize((self.load_size, self.load_size)))
-        steps.extend([
-            transforms.ToTensor(),
-            transforms.Normalize(**_IMAGENET),
-        ])
+        steps.extend(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(**_IMAGENET),
+            ]
+        )
         self._transform = transforms.Compose(steps)
 
     def _ensure_download(self, cache: Path) -> None:
@@ -237,18 +249,18 @@ class LaDeDaDetector(BaseDetector):
                 )
             matches[0].rename(self._ckpt)
 
-    # --------------------------------------------------------------------------    -------------------------------------------
+    # ---------------------------------------------------------------------------
     # Input handling
-    # --------------------------------------------------------------------------    -------------------------------------------
+    # ---------------------------------------------------------------------------
 
     def _normalize_input(self, input_data: Any) -> Image.Image:
         if hasattr(input_data, "mode"):
             return input_data.convert("RGB")
         return load_image(Path(str(input_data)))
 
-    # --------------------------------------------------------------------------    -------------------------------------------
+    # ---------------------------------------------------------------------------
     # Inference
-    # --------------------------------------------------------------------------    ------------------------------------------- 
+    # ---------------------------------------------------------------------------
 
     @torch.no_grad()
     def predict(self, input_data: Any) -> DetectionResult:

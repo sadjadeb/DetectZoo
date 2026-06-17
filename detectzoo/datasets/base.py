@@ -60,9 +60,7 @@ class BaseDataset(ABC):
         return self._items
 
     @staticmethod
-    def _balance_and_truncate(
-        items: List[DatasetItem], max_samples: int
-    ) -> List[DatasetItem]:
+    def _balance_and_truncate(items: List[DatasetItem], max_samples: int) -> List[DatasetItem]:
         """Pick ``max_samples`` items balanced across labels 0 and 1.
 
         Takes ``max_samples // 2`` from each class. If one class is short,

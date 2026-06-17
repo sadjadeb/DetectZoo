@@ -56,9 +56,7 @@ def load_detector(name: str, **kwargs: Any) -> BaseDetector:
     resolved = _ALIASES.get(name, name)
     if resolved not in _REGISTRY:
         available = ", ".join(sorted(set(_REGISTRY) | set(_ALIASES))) or "(none)"
-        raise ValueError(
-            f"Unknown detector '{name}'. Available detectors: {available}"
-        )
+        raise ValueError(f"Unknown detector '{name}'. Available detectors: {available}")
     return _REGISTRY[resolved](**kwargs)
 
 
@@ -66,9 +64,7 @@ def list_detectors(modality: str | None = None) -> list[str]:
     """Return names of all registered detectors, optionally filtered by modality."""
     if modality is None:
         return sorted(_REGISTRY)
-    return sorted(
-        name for name, cls in _REGISTRY.items() if cls.modality == modality
-    )
+    return sorted(name for name, cls in _REGISTRY.items() if cls.modality == modality)
 
 
 # ======================================================================
@@ -127,9 +123,7 @@ def load_dataset(name: str, **kwargs: Any) -> BaseDataset:
     resolved = _DATASET_ALIASES.get(name, name)
     if resolved not in _DATASET_REGISTRY:
         available = ", ".join(sorted(set(_DATASET_REGISTRY) | set(_DATASET_ALIASES))) or "(none)"
-        raise ValueError(
-            f"Unknown dataset '{name}'. Available datasets: {available}"
-        )
+        raise ValueError(f"Unknown dataset '{name}'. Available datasets: {available}")
     return _DATASET_REGISTRY[resolved](**kwargs)
 
 
@@ -137,6 +131,4 @@ def list_datasets(modality: str | None = None) -> list[str]:
     """Return names of all registered datasets, optionally filtered by modality."""
     if modality is None:
         return sorted(_DATASET_REGISTRY)
-    return sorted(
-        name for name, cls in _DATASET_REGISTRY.items() if cls.modality == modality
-    )
+    return sorted(name for name, cls in _DATASET_REGISTRY.items() if cls.modality == modality)

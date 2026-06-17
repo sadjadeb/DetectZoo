@@ -107,14 +107,16 @@ class WritingPromptsDataset(BaseDataset):
         ds = load_dataset("euclaise/writingprompts", split=self.split)
         items: List[DatasetItem] = []
         for row in ds:
-            items.append(DatasetItem(
-                data=row.get("story", ""),
-                label=0,
-                metadata={
-                    "source": "human",
-                    "prompt": row.get("prompt", ""),
-                },
-            ))
+            items.append(
+                DatasetItem(
+                    data=row.get("story", ""),
+                    label=0,
+                    metadata={
+                        "source": "human",
+                        "prompt": row.get("prompt", ""),
+                    },
+                )
+            )
             if self.max_samples and len(items) >= self.max_samples:
                 break
         return items
@@ -129,14 +131,16 @@ class WritingPromptsDataset(BaseDataset):
             with open(fp, encoding="utf-8") as fh:
                 for line in fh:
                     row: dict[str, Any] = json.loads(line)
-                    items.append(DatasetItem(
-                        data=row.get("story", row.get("text", "")),
-                        label=int(row.get("label", 0)),
-                        metadata={
-                            "source": row.get("source", "human"),
-                            "prompt": row.get("prompt", ""),
-                        },
-                    ))
+                    items.append(
+                        DatasetItem(
+                            data=row.get("story", row.get("text", "")),
+                            label=int(row.get("label", 0)),
+                            metadata={
+                                "source": row.get("source", "human"),
+                                "prompt": row.get("prompt", ""),
+                            },
+                        )
+                    )
                     if self.max_samples and len(items) >= self.max_samples:
                         return items
         return items

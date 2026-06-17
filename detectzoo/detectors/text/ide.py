@@ -194,6 +194,7 @@ class _IDEBase(BaseTextDetector):
     def _get_point_cloud(self, text: str) -> np.ndarray:
         """Encode text into a point cloud of token embeddings."""
         import re
+
         text = re.sub(r"\n", " ", text)
         text = re.sub(r"  +", " ", text)
 
@@ -237,8 +238,7 @@ class PHDDetector(_IDEBase):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(encoder_model=encoder_model, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(encoder_model=encoder_model, threshold=threshold, device=device, **kwargs)
         self.alpha = alpha
         self.n_reruns = n_reruns
 
@@ -278,8 +278,7 @@ class MLEDetector(_IDEBase):
         device: str = "cpu",
         **kwargs: Any,
     ) -> None:
-        super().__init__(encoder_model=encoder_model, threshold=threshold,
-                         device=device, **kwargs)
+        super().__init__(encoder_model=encoder_model, threshold=threshold, device=device, **kwargs)
         self.n_neighbors = n_neighbors
 
     def predict(self, input_data: Any) -> DetectionResult:

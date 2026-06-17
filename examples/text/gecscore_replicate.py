@@ -64,8 +64,7 @@ DEFAULT_DETECTOR_NAMES: List[str] = [
 GECSCORE_OWNER_REPO = "NLP2CT/GECScore"
 GECSCORE_API_BASE = f"https://api.github.com/repos/{GECSCORE_OWNER_REPO}/contents/data/normal_data"
 GECSCORE_RAW_BASE = (
-    f"https://raw.githubusercontent.com/{GECSCORE_OWNER_REPO}/"
-    "refs/heads/main/data/normal_data"
+    f"https://raw.githubusercontent.com/{GECSCORE_OWNER_REPO}/refs/heads/main/data/normal_data"
 )
 
 NORMAL_DATA_SUFFIX = ".normal.test_data.json"
@@ -111,17 +110,13 @@ class GECScoreFile:
 
 
 def _http_get_json(url: str) -> Any:
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "DetectZoo-GECScore-replicate"}
-    )
+    req = urllib.request.Request(url, headers={"User-Agent": "DetectZoo-GECScore-replicate"})
     with urllib.request.urlopen(req, timeout=60) as resp:
         return json.load(resp)
 
 
 def _http_get_bytes(url: str) -> bytes:
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "DetectZoo-GECScore-replicate"}
-    )
+    req = urllib.request.Request(url, headers={"User-Agent": "DetectZoo-GECScore-replicate"})
     with urllib.request.urlopen(req, timeout=120) as resp:
         return resp.read()
 
@@ -199,9 +194,7 @@ def _label_to_binary(label: Any) -> int:
         return 0
     if s in ("llm", "machine", "ai", "fake", "1"):
         return 1
-    raise ValueError(
-        f"Unsupported label: {label!r} (expected 'human' or 'llm')"
-    )
+    raise ValueError(f"Unsupported label: {label!r} (expected 'human' or 'llm')")
 
 
 class GECScoreJsonDataset(BaseDataset):
@@ -258,17 +251,62 @@ def _safe_slug(s: str) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument("--sources", nargs="+", default=None, help="Only these corpora (e.g. xsum writing). Default: all files on GitHub.")
-    p.add_argument("--models", nargs="+", default=None, help="Only these generator names as in the filename (e.g. GPT-4o gpt3.5). Default: all files on GitHub.")
-    p.add_argument("--data-url", type=str, default=None, help="If set, evaluate this single URL only and skip API discovery. Cache path defaults to data/gecscore/normal_data/ derived from the URL name.")
-    p.add_argument("--cache-path", type=Path, default=None, help="With --data-url, where to save the file (default: under data/gecscore/normal_data/).")
-    p.add_argument("--max-samples", type=int, default=None, help="Cap samples per file for quick debug runs.")
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    p.add_argument(
+        "--sources",
+        nargs="+",
+        default=None,
+        help="Only these corpora (e.g. xsum writing). Default: all files on GitHub.",
+    )
+    p.add_argument(
+        "--models",
+        nargs="+",
+        default=None,
+        help=(
+            "Only these generator names as in the filename (e.g. GPT-4o gpt3.5). "
+            "Default: all files on GitHub."
+        ),
+    )
+    p.add_argument(
+        "--data-url",
+        type=str,
+        default=None,
+        help=(
+            "If set, evaluate this single URL only and skip API discovery. "
+            "Cache path defaults to data/gecscore/normal_data/ from the URL name."
+        ),
+    )
+    p.add_argument(
+        "--cache-path",
+        type=Path,
+        default=None,
+        help="With --data-url, where to save the file (default: under data/gecscore/normal_data/).",
+    )
+    p.add_argument(
+        "--max-samples", type=int, default=None, help="Cap samples per file for quick debug runs."
+    )
     p.add_argument("--device", type=str, default="cuda", help="Device for detectors.")
-    p.add_argument("--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names.")
-    p.add_argument("--output-dir", type=Path, default=Path("experiments"), help="Directory for per-file benchmark JSONs.")
-    p.add_argument("--save-scores", action="store_true", help="Store per-sample scores in each output JSON (like imbd).")
-    p.add_argument("--list-only", action="store_true", help="List discovered files and exit (no download or evaluation).")
+    p.add_argument(
+        "--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names."
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("experiments"),
+        help="Directory for per-file benchmark JSONs.",
+    )
+    p.add_argument(
+        "--save-scores",
+        action="store_true",
+        help="Store per-sample scores in each output JSON (like imbd).",
+    )
+    p.add_argument(
+        "--list-only",
+        action="store_true",
+        help="List discovered files and exit (no download or evaluation).",
+    )
     return p.parse_args()
 
 
@@ -377,7 +415,9 @@ def main() -> None:
         out_path = args.output_dir / f"gecscore__{out_slug}__{ts}.json"
         evaluator = BenchmarkEvaluator(dataset)
         try:
-            evaluator.run_and_save(detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True)
+            evaluator.run_and_save(
+                detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True
+            )
             print(f"  results -> {out_path}")
         except Exception:
             print(f"  [ERROR] evaluation failed for {f.slug}")

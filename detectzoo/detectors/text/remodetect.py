@@ -64,9 +64,8 @@ class ReMoDetectDetector(BaseTextDetector):
 
         logger.info("Loading ReMoDetect reward model '%s' …", self.model_name)
         self._rm_tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self._rm_model = (
-            AutoModelForSequenceClassification.from_pretrained(self.model_name)
-            .to(self._device)
+        self._rm_model = AutoModelForSequenceClassification.from_pretrained(self.model_name).to(
+            self._device
         )
         self._rm_model.eval()
 

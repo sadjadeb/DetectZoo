@@ -140,7 +140,9 @@ def _load_from_metadata_csv(root: Path, meta_path: Path) -> List[DatasetItem]:
             raise ValueError(f"In-The-Wild: empty metadata file {meta_path}")
         field_map = {f.strip().lower(): f for f in reader.fieldnames}
         file_col = field_map.get("file") or field_map.get("filename") or field_map.get("path")
-        label_col = field_map.get("label") or field_map.get("class") or field_map.get("ground_truth")
+        label_col = (
+            field_map.get("label") or field_map.get("class") or field_map.get("ground_truth")
+        )
         if not file_col or not label_col:
             raise ValueError(
                 f"In-The-Wild: {meta_path} must contain file and label columns; "
@@ -183,9 +185,7 @@ def _load_from_metadata_csv(root: Path, meta_path: Path) -> List[DatasetItem]:
 def _load_from_class_dirs(root: Path) -> List[DatasetItem]:
     pairs = _class_dirs(root)
     if not pairs:
-        raise FileNotFoundError(
-            f"In-The-Wild: no real/fake class folders under {root}"
-        )
+        raise FileNotFoundError(f"In-The-Wild: no real/fake class folders under {root}")
     items: List[DatasetItem] = []
     for dir_path, label, role in pairs:
         meta = {"modality": "audio", "class": role}

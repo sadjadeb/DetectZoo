@@ -149,11 +149,13 @@ class OpenLLMTextDataset(BaseDataset):
                 if not line.strip():
                     continue
                 row: dict[str, Any] = json.loads(line)
-                items.append(DatasetItem(
-                    data=row.get("text", row.get("string", "")),
-                    label=label,
-                    metadata={"source": source, "split": split_name},
-                ))
+                items.append(
+                    DatasetItem(
+                        data=row.get("text", row.get("string", "")),
+                        label=label,
+                        metadata={"source": source, "split": split_name},
+                    )
+                )
         return items
 
     def _load_all(self) -> List[DatasetItem]:

@@ -36,13 +36,13 @@ from detectzoo.datasets._download import download_file, get_cache_dir
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-_CKPT_URL   = "https://github.com/clovaai/aasist/raw/main/models/weights/AASIST.pth"
+_CKPT_URL = "https://github.com/clovaai/aasist/raw/main/models/weights/AASIST.pth"
 _CKPT_URL_L = "https://github.com/clovaai/aasist/raw/main/models/weights/AASIST-L.pth"
-_CKPT_NAME   = "AASIST.pth"
+_CKPT_NAME = "AASIST.pth"
 _CKPT_NAME_L = "AASIST-L.pth"
 
 _SAMPLE_RATE = 16_000
-_MAX_SAMPLES = 64_600   # ~4 s at 16 kHz (standard ASVspoof eval length)
+_MAX_SAMPLES = 64_600  # ~4 s at 16 kHz (standard ASVspoof eval length)
 
 # Model configs (from clovaai/aasist/config/AASIST{,-L}.conf)
 _D_ARGS_BASE: dict = {
@@ -194,21 +194,23 @@ class HtrgGraphAttentionLayer(nn.Module):
         att_map = att_map / self.temp
         return F.softmax(att_map, dim=-2)
 
-    def _derive_att_map(
-        self, x: torch.Tensor, num_type1: int, num_type2: int
-    ) -> torch.Tensor:
+    def _derive_att_map(self, x: torch.Tensor, num_type1: int, num_type2: int) -> torch.Tensor:
         att_map = self._pairwise_mul_nodes(x)
         att_map = torch.tanh(self.att_proj(att_map))
 
         att_board = torch.zeros_like(att_map[:, :, :, 0]).unsqueeze(-1)
         att_board[:, :num_type1, :num_type1, :] = torch.matmul(
-            att_map[:, :num_type1, :num_type1, :], self.att_weight11)
+            att_map[:, :num_type1, :num_type1, :], self.att_weight11
+        )
         att_board[:, num_type1:, num_type1:, :] = torch.matmul(
-            att_map[:, num_type1:, num_type1:, :], self.att_weight22)
+            att_map[:, num_type1:, num_type1:, :], self.att_weight22
+        )
         att_board[:, :num_type1, num_type1:, :] = torch.matmul(
-            att_map[:, :num_type1, num_type1:, :], self.att_weight12)
+            att_map[:, :num_type1, num_type1:, :], self.att_weight12
+        )
         att_board[:, num_type1:, :num_type1, :] = torch.matmul(
-            att_map[:, num_type1:, :num_type1, :], self.att_weight12)
+            att_map[:, num_type1:, :num_type1, :], self.att_weight12
+        )
 
         att_map = att_board / self.temp
         return F.softmax(att_map, dim=-2)
@@ -221,9 +223,7 @@ class HtrgGraphAttentionLayer(nn.Module):
     def _project_master(
         self, x: torch.Tensor, master: torch.Tensor, att_map: torch.Tensor
     ) -> torch.Tensor:
-        x1 = self.proj_with_attM(
-            torch.matmul(att_map.squeeze(-1).unsqueeze(1), x)
-        )
+        x1 = self.proj_with_attM(torch.matmul(att_map.squeeze(-1).unsqueeze(1), x))
         x2 = self.proj_without_attM(master)
         return x1 + x2
 
@@ -313,9 +313,7 @@ class CONV(nn.Module):
         fmel = self._to_mel(f)
         filbandwidthsmel = np.linspace(np.min(fmel), np.max(fmel), self.out_channels + 1)
         self.mel = self._to_hz(filbandwidthsmel)
-        self.hsupp = torch.arange(
-            -(self.kernel_size - 1) / 2, (self.kernel_size - 1) / 2 + 1
-        )
+        self.hsupp = torch.arange(-(self.kernel_size - 1) / 2, (self.kernel_size - 1) / 2 + 1)
         band_pass = torch.zeros(self.out_channels, self.kernel_size)
         for i in range(len(self.mel) - 1):
             fmin, fmax = self.mel[i], self.mel[i + 1]
@@ -337,12 +335,16 @@ class CONV(nn.Module):
         if mask:
             A = int(np.random.uniform(0, 20))
             A0 = random.randint(0, band_pass_filter.shape[0] - A) if A > 0 else 0
-            band_pass_filter[A0:A0 + A, :] = 0
+            band_pass_filter[A0 : A0 + A, :] = 0
         filters = band_pass_filter.view(self.out_channels, 1, self.kernel_size)
         return F.conv1d(
-            x, filters,
-            stride=self.stride, padding=self.padding, dilation=self.dilation,
-            bias=None, groups=1,
+            x,
+            filters,
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            bias=None,
+            groups=1,
         )
 
 
@@ -356,20 +358,29 @@ class _ResidualBlock(nn.Module):
         if not first:
             self.bn1 = nn.BatchNorm2d(num_features=nb_filts[0])
         self.conv1 = nn.Conv2d(
-            in_channels=nb_filts[0], out_channels=nb_filts[1],
-            kernel_size=(2, 3), padding=(1, 1), stride=1,
+            in_channels=nb_filts[0],
+            out_channels=nb_filts[1],
+            kernel_size=(2, 3),
+            padding=(1, 1),
+            stride=1,
         )
         self.selu = nn.SELU(inplace=True)
         self.bn2 = nn.BatchNorm2d(num_features=nb_filts[1])
         self.conv2 = nn.Conv2d(
-            in_channels=nb_filts[1], out_channels=nb_filts[1],
-            kernel_size=(2, 3), padding=(0, 1), stride=1,
+            in_channels=nb_filts[1],
+            out_channels=nb_filts[1],
+            kernel_size=(2, 3),
+            padding=(0, 1),
+            stride=1,
         )
         if nb_filts[0] != nb_filts[1]:
             self.downsample = True
             self.conv_downsample = nn.Conv2d(
-                in_channels=nb_filts[0], out_channels=nb_filts[1],
-                padding=(0, 1), kernel_size=(1, 3), stride=1,
+                in_channels=nb_filts[0],
+                out_channels=nb_filts[1],
+                padding=(0, 1),
+                kernel_size=(1, 3),
+                stride=1,
             )
         else:
             self.downsample = False
@@ -455,52 +466,42 @@ class _AASISTModel(nn.Module):
 
         self.out_layer = nn.Linear(5 * gat_dims[1], 2)
 
-    def forward(
-        self, x: torch.Tensor, Freq_aug: bool = False
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, x: torch.Tensor, Freq_aug: bool = False) -> tuple[torch.Tensor, torch.Tensor]:
         """x : (B, T) raw waveform at 16 kHz. Returns (hidden[B,160], logits[B,2])."""
-        x = x.unsqueeze(1)                              # [B, 1, T]
-        x = self.conv_time(x, mask=Freq_aug)            # SincConv -> [B, filts0, T']
-        x = x.unsqueeze(dim=1)                          # [B, 1, filts0, T']
-        x = F.max_pool2d(torch.abs(x), (3, 3))          # [B, 1, 23, T'']
+        x = x.unsqueeze(1)  # [B, 1, T]
+        x = self.conv_time(x, mask=Freq_aug)  # SincConv -> [B, filts0, T']
+        x = x.unsqueeze(dim=1)  # [B, 1, filts0, T']
+        x = F.max_pool2d(torch.abs(x), (3, 3))  # [B, 1, 23, T'']
         x = self.first_bn(x)
         x = self.selu(x)
 
-        e = self.encoder(x)                             # [B, C, F', T''']
+        e = self.encoder(x)  # [B, C, F', T''']
 
         # ---- spectral / temporal branches -----------------------------------
-        e_S, _ = torch.max(torch.abs(e), dim=3)         # max over time
+        e_S, _ = torch.max(torch.abs(e), dim=3)  # max over time
         e_S = e_S.transpose(1, 2) + self.pos_S
         gat_S = self.GAT_layer_S(e_S)
         out_S = self.pool_S(gat_S)
 
-        e_T, _ = torch.max(torch.abs(e), dim=2)         # max over freq
+        e_T, _ = torch.max(torch.abs(e), dim=2)  # max over freq
         e_T = e_T.transpose(1, 2)
         gat_T = self.GAT_layer_T(e_T)
         out_T = self.pool_T(gat_T)
 
         # ---- HS-GAL inference 1 --------------------------------------------
-        out_T1, out_S1, master1 = self.HtrgGAT_layer_ST11(
-            out_T, out_S, master=self.master1
-        )
+        out_T1, out_S1, master1 = self.HtrgGAT_layer_ST11(out_T, out_S, master=self.master1)
         out_S1 = self.pool_hS1(out_S1)
         out_T1 = self.pool_hT1(out_T1)
-        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST12(
-            out_T1, out_S1, master=master1
-        )
+        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST12(out_T1, out_S1, master=master1)
         out_T1 = out_T1 + out_T_aug
         out_S1 = out_S1 + out_S_aug
         master1 = master1 + master_aug
 
         # ---- HS-GAL inference 2 --------------------------------------------
-        out_T2, out_S2, master2 = self.HtrgGAT_layer_ST21(
-            out_T, out_S, master=self.master2
-        )
+        out_T2, out_S2, master2 = self.HtrgGAT_layer_ST21(out_T, out_S, master=self.master2)
         out_S2 = self.pool_hS2(out_S2)
         out_T2 = self.pool_hT2(out_T2)
-        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST22(
-            out_T2, out_S2, master=master2
-        )
+        out_T_aug, out_S_aug, master_aug = self.HtrgGAT_layer_ST22(out_T2, out_S2, master=master2)
         out_T2 = out_T2 + out_T_aug
         out_S2 = out_S2 + out_S_aug
         master2 = master2 + master_aug
@@ -521,9 +522,7 @@ class _AASISTModel(nn.Module):
         S_max, _ = torch.max(torch.abs(out_S), dim=1)
         S_avg = torch.mean(out_S, dim=1)
 
-        last_hidden = torch.cat(
-            [T_max, T_avg, S_max, S_avg, master.squeeze(1)], dim=1
-        )
+        last_hidden = torch.cat([T_max, T_avg, S_max, S_avg, master.squeeze(1)], dim=1)
         last_hidden = self.drop(last_hidden)
         output = self.out_layer(last_hidden)
         return last_hidden, output
@@ -533,23 +532,27 @@ class _AASISTModel(nn.Module):
 # Audio helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_audio(path: Union[str, Path], target_sr: int = _SAMPLE_RATE) -> torch.Tensor:
     """Load audio file -> mono float32 [1, T] at target_sr."""
     try:
         import torchaudio
+
         wav, sr = torchaudio.load(str(path))
         if sr != target_sr:
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     except Exception:
         import soundfile as sf
+
         data, sr = sf.read(str(path), always_2d=True)
         wav = torch.from_numpy(data.T.astype(np.float32))
         if sr != target_sr:
             import torchaudio
+
             wav = torchaudio.functional.resample(wav, sr, target_sr)
     if wav.shape[0] > 1:
         wav = wav.mean(dim=0, keepdim=True)
-    return wav   # [1, T]
+    return wav  # [1, T]
 
 
 def _pad_or_trim(wav: torch.Tensor, length: int) -> torch.Tensor:
@@ -564,6 +567,7 @@ def _pad_or_trim(wav: torch.Tensor, length: int) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # DetectZoo detector wrapper
 # ---------------------------------------------------------------------------
+
 
 @register_detector("aasist", aliases=["aasist_audio"])
 class AASISTDetector(BaseDetector):
@@ -611,7 +615,7 @@ class AASISTDetector(BaseDetector):
         else:
             cache = get_cache_dir("aasist", cache_dir)
             name = _CKPT_NAME if variant == "base" else _CKPT_NAME_L
-            url  = _CKPT_URL  if variant == "base" else _CKPT_URL_L
+            url = _CKPT_URL if variant == "base" else _CKPT_URL_L
             self._weight_path = cache / name
             download_file(url, self._weight_path)
 
@@ -652,7 +656,7 @@ class AASISTDetector(BaseDetector):
                 wav = wav.unsqueeze(0)
         else:
             wav = _load_audio(input_data, _SAMPLE_RATE)
-        return _pad_or_trim(wav, _MAX_SAMPLES)   # [1, T]
+        return _pad_or_trim(wav, _MAX_SAMPLES)  # [1, T]
 
     @torch.no_grad()
     def predict(self, input_data: Any) -> DetectionResult:
@@ -668,9 +672,9 @@ class AASISTDetector(BaseDetector):
         DetectionResult
             score=P(ai), label='ai'/'human', confidence in [0,1].
         """
-        wav = self._normalize_input(input_data).to(self._device)    # [1, T]
-        _, logits = self._model(wav)                                # ([1,160], [1,2])
-        probs = torch.softmax(logits, dim=-1)                       # [1, 2]
+        wav = self._normalize_input(input_data).to(self._device)  # [1, T]
+        _, logits = self._model(wav)  # ([1,160], [1,2])
+        probs = torch.softmax(logits, dim=-1)  # [1, 2]
 
         # AASIST training convention: index 0 = spoof/ai, index 1 = bonafide/human
         # (see clovaai/aasist data_utils.py: `d_meta[key] = 1 if label == "bonafide" else 0`,

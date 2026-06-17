@@ -53,7 +53,9 @@ class _Bottleneck(nn.Module):
 
 
 class _ResNet(nn.Module):
-    def __init__(self, block: type[_Bottleneck], layers: list[int], *, num_classes: int = 1) -> None:
+    def __init__(
+        self, block: type[_Bottleneck], layers: list[int], *, num_classes: int = 1
+    ) -> None:
         super().__init__()
         self.inplanes = 64
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)

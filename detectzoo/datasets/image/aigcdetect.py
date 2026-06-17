@@ -8,7 +8,8 @@ Reference:
 Note:
     In the original PatchCraft / AIGCDetectBenchmark setup, the **training split** is based on
     the CNNSpot/CNNDetection training data (i.e., the ForenSynths-style ProGAN-based training
-    set), while AIGCDetect is primarily used as a large, unified test benchmark across many generators.
+    set), while AIGCDetect is primarily used as a large unified test benchmark across
+    many generators.
 
 GitHub: https://github.com/Ekko-zn/AIGCDetectBenchmark
 ModelScope: ``aemilia/AIGCDetectionBenchmark``
@@ -21,8 +22,8 @@ import zipfile
 from pathlib import Path
 from typing import Any, List, Optional, Sequence, Tuple
 
-from detectzoo.datasets.base import BaseDataset, DatasetItem
 from detectzoo.core.registry import register_dataset
+from detectzoo.datasets.base import BaseDataset, DatasetItem
 
 _MODELSCOPE_AIGCDETECT_DATASET: str = "aemilia/AIGCDetectionBenchmark"
 
@@ -67,11 +68,7 @@ def _partition_layout_ok(parent: Path, folder_name: str) -> bool:
         return False
     try:
         for sub in base.iterdir():
-            if (
-                sub.is_dir()
-                and (sub / "0_real").is_dir()
-                and (sub / "1_fake").is_dir()
-            ):
+            if sub.is_dir() and (sub / "0_real").is_dir() and (sub / "1_fake").is_dir():
                 return True
     except OSError:
         return False
@@ -198,9 +195,7 @@ def ensure_aigcdetect_downloaded(
     if found is not None:
         return found
 
-    raise RuntimeError(
-        "Could not locate AIGCDetectBenchmark after ModelScope download."
-    )
+    raise RuntimeError("Could not locate AIGCDetectBenchmark after ModelScope download.")
 
 
 def resolve_aigcdetect_partition(partition: str) -> Tuple[str, str]:
@@ -219,7 +214,7 @@ class AIGCDetectDataset(BaseDataset):
     Parameters
     ----------
     root : str or Path, optional
-        Directory intended to contain partition folders, or a parent to search. 
+        Directory intended to contain partition folders, or a parent to search.
         When omitted, the default cache directory ``.detectzoo_data/aigcdetect/`` is used.
     partitions : sequence of str, optional
         Partition(s) to load. Each entry may be either a **column** name
@@ -248,7 +243,6 @@ class AIGCDetectDataset(BaseDataset):
         self._resolved_root: Optional[Path] = None
 
     def _data_root(self) -> Path:
-        from detectzoo.datasets._download import get_cache_dir
 
         if self._resolved_root is not None:
             return self._resolved_root
@@ -290,6 +284,12 @@ class AIGCDetectDataset(BaseDataset):
                 ):
                     for path in sorted(d.rglob("*")):
                         if path.is_file() and path.suffix.lower() in _IMAGE_EXTS:
-                            items.append(DatasetItem(data=str(path), label=label, metadata={**base_meta, "source": source}))
+                            items.append(
+                                DatasetItem(
+                                    data=str(path),
+                                    label=label,
+                                    metadata={**base_meta, "source": source},
+                                )
+                            )
 
         return items
