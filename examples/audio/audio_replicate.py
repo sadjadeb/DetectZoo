@@ -73,6 +73,10 @@ DEFAULT_DETECTOR_NAMES: List[str] = [
     "anti_deepfake_hubert",
     "anti_deepfake_xlsr2b",
     "xlsr_sls",
+    "raw_pc_darts",
+    "safeear",
+    "tcm",
+    "xlsr_mamba",
 ]
 
 
