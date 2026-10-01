@@ -1,0 +1,30 @@
+# DetectZoo code owners
+#
+# GitHub requests review from listed owners when a PR touches matching paths.
+# Update GitHub usernames here if a handle changes.
+#
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: project maintainers
+* @sadjadeb
+
+# Modality leads (maintainers still listed on * above)
+/detectzoo/detectors/text/ @sadjadeb
+/detectzoo/datasets/text/ @sadjadeb
+/detectzoo/detectors/audio/ @BardiaShir @sadjadeb
+/detectzoo/datasets/audio/ @BardiaShir @sadjadeb
+/detectzoo/detectors/image/ @nimajam41 @sadjadeb
+/detectzoo/datasets/image/ @nimajam41 @sadjadeb
+/detectzoo/detectors/image/ @aditya10 @sadjadeb
+/detectzoo/datasets/image/ @aditya10 @sadjadeb
+
+# Shared infrastructure
+/detectzoo/benchmarks/ @sadjadeb @BardiaShir
+/detectzoo/core/ @sadjadeb
+/tests/ @sadjadeb @BardiaShir @nimajam41 @aditya10
+
+# Docs and examples
+/docs/ @sadjadeb
+/examples/ @sadjadeb @BardiaShir @nimajam41 @aditya10
+/README.md @sadjadeb
+/CONTRIBUTING.md @sadjadeb
