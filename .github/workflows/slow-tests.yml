@@ -1,0 +1,32 @@
+name: Slow tests
+
+on:
+  schedule:
+    # Weekly Monday 06:00 UTC — downloads models; too heavy for every PR.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  slow:
+    name: Slow tests (model downloads)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install package and dev tools
+        run: pip install -e ".[dev]"
+
+      - name: Run slow tests
+        env:
+          # Optional: add HF_TOKEN repo secret to reduce Hugging Face rate limits.
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: pytest -m slow -v --tb=short
