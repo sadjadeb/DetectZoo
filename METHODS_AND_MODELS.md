@@ -73,6 +73,7 @@ Detectors for identifying LLM-generated text. Each typically accepts a string (o
 |------|-------|--------|
 | `roberta_base` | `RobertaBaseDetector` | Pre-trained [RoBERTa Base OpenAI Detector](https://huggingface.co/openai-community/roberta-base-openai-detector). Classifies text as Real/Fake using a RoBERTa-base model fine-tuned on GPT-2 outputs. Also available as `"roberta_openai_base"`. |
 | `roberta_large` | `RobertaLargeDetector` | Pre-trained [RoBERTa Large OpenAI Detector](https://huggingface.co/openai-community/roberta-large-openai-detector). Same approach as base but with a larger backbone. Also available as `"roberta_openai_large"`. |
+| `chatgpt_detector` | `ChatGPTDetector` | [ChatGPT-Detector](https://huggingface.co/Hello-SimpleAI/chatgpt-detector-roberta) (Guo et al., 2023). RoBERTa-base trained on HC3; ReMoDetect Table 2 Chat-D baseline. Also available as `"chatgpt_roberta"` / `"chat_d"`. |
 | `radar` | `RADARDetector` | RoBERTa-large fine-tuned jointly with a paraphraser for robustness against paraphrase attacks. |
 | `imbd` | `ImBDDetector` | Imitate Before Detect. Fine-tunes GPT-Neo-2.7B with Style Preference Optimization (SPO) to learn machine writing preferences, then uses the analytic sampling discrepancy as the detection score. |
 | `remodetect` | `ReMoDetectDetector` | Reward Model detection. Uses a pre-trained reward model (DeBERTa-v3-Large) to score text — aligned LLMs produce text with higher reward scores. (Lee et al., NeurIPS 2024) |

@@ -28,7 +28,11 @@ from detectzoo.detectors.text.raidar import RaidarDetector
 from detectzoo.detectors.text.rank import RankDetector
 from detectzoo.detectors.text.remodetect import ReMoDetectDetector
 from detectzoo.detectors.text.revise_detect import ReviseDetector
-from detectzoo.detectors.text.roberta import RobertaBaseDetector, RobertaLargeDetector
+from detectzoo.detectors.text.roberta import (
+    ChatGPTDetector,
+    RobertaBaseDetector,
+    RobertaLargeDetector,
+)
 from detectzoo.detectors.text.text_fluoroscopy import TextFluoroscopyDetector
 from detectzoo.detectors.text.tocsin import TOCSINDetector
 
@@ -36,6 +40,7 @@ __all__ = [
     "AdaDetectGPTDetector",
     "BinocularsDetector",
     "BiScopeDetector",
+    "ChatGPTDetector",
     "CoCoDetector",
     "DetectGPTDetector",
     "DeTeCtiveDetector",

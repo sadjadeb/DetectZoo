@@ -1,19 +1,20 @@
-"""RoBERTa OpenAI Detector — supervised GPT-2 output detection.
+"""RoBERTa supervised detectors — OpenAI Detector and ChatGPT-Detector.
 
-Reference:
+References:
     Solaiman et al., "Release strategies and the social impacts
-    of language models." arXiv 2024.
+    of language models." arXiv 2019.
+    Guo et al., "How Close is ChatGPT to Human Experts? Comparison
+    Corpus, Evaluation, and Detection." arXiv 2023.
 
-
-Uses the pre-trained OpenAI GPT-2 output detector models hosted on
-HuggingFace.  Two variants are available:
+HuggingFace checkpoints:
 
 * **base** — ``openai-community/roberta-base-openai-detector`` (125 M params)
 * **large** — ``openai-community/roberta-large-openai-detector`` (355 M params)
+* **chatgpt** — ``Hello-SimpleAI/chatgpt-detector-roberta`` (RoBERTa-base
+  trained on HC3; the ChatGPT-Detector baseline in ReMoDetect)
 
-The models are RoBERTa-based sequence classifiers fine-tuned to
-distinguish WebText (human) from 1.5B-parameter GPT-2 outputs.
-Label 0 = *Real* (human), label 1 = *Fake* (AI-generated).
+OpenAI variants distinguish WebText (human) from GPT-2 outputs.
+ChatGPT-Detector distinguishes human vs ChatGPT answers on HC3.
 """
 
 from __future__ import annotations
@@ -32,11 +33,16 @@ logger = get_logger(__name__)
 _VARIANTS: dict[str, str] = {
     "base": "openai-community/roberta-base-openai-detector",
     "large": "openai-community/roberta-large-openai-detector",
+    "chatgpt": "Hello-SimpleAI/chatgpt-detector-roberta",
 }
+
+_AI_LABEL_TOKENS = frozenset(
+    {"fake", "ai", "chatgpt", "machine", "llm", "generated", "gpt"}
+)
 
 
 class _RobertaOpenAIBase(BaseTextDetector):
-    """Shared implementation for both RoBERTa OpenAI Detector variants.
+    """Shared implementation for RoBERTa sequence-classification detectors.
 
     Parameters:
         threshold: Decision boundary on the AI-class probability.
@@ -72,7 +78,7 @@ class _RobertaOpenAIBase(BaseTextDetector):
     def _load_model(self) -> None:
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-        logger.info("Loading RoBERTa OpenAI Detector (%s) '%s' …", self._variant, self.model_name)
+        logger.info("Loading RoBERTa classifier (%s) '%s' …", self._variant, self.model_name)
         self._cls_tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self._cls_model = AutoModelForSequenceClassification.from_pretrained(
             self.model_name,
@@ -110,8 +116,16 @@ class _RobertaOpenAIBase(BaseTextDetector):
         logits = self.cls_model(**enc).logits
         probs = torch.softmax(logits, dim=-1).squeeze(0)
 
-        real_prob = float(probs[0])
-        fake_prob = float(probs[1])
+        ai_idx = 1
+        id2label = getattr(self.cls_model.config, "id2label", None) or {}
+        for idx, label in id2label.items():
+            if str(label).lower() in _AI_LABEL_TOKENS:
+                ai_idx = int(idx)
+                break
+        human_idx = 0 if ai_idx != 0 else 1
+
+        real_prob = float(probs[human_idx])
+        fake_prob = float(probs[ai_idx])
 
         return self._make_result(
             fake_prob,
@@ -144,3 +158,14 @@ class RobertaLargeDetector(_RobertaOpenAIBase):
     """
 
     _variant = "large"
+
+
+@register_detector("chatgpt_detector", aliases=["chatgpt_roberta", "chat_d"])
+class ChatGPTDetector(_RobertaOpenAIBase):
+    """ChatGPT-Detector (Guo et al., 2023) — ReMoDetect Table 2 Chat-D.
+
+    Uses ``Hello-SimpleAI/chatgpt-detector-roberta`` (RoBERTa-base trained
+    on HC3). Label 0 = Human, label 1 = ChatGPT.
+    """
+
+    _variant = "chatgpt"
