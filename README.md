@@ -269,7 +269,9 @@ python examples/audio/audio_replicate.py --dataset in_the_wild --detectors rawne
 
 ## Contributing
 
-We welcome community contributions. You can contribute by:
+We welcome community contributions. Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full workflow.
+
+You can contribute by:
 
 * Adding new detectors (see the extensibility section above)
 * Improving existing implementations
