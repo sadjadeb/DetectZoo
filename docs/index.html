@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+        content="DetectZoo: a unified, extensible toolkit for AI-generated content detection across text, audio, and image modalities. 61 detectors, 22 datasets, one API.">
+  <meta name="keywords" content="AI-generated content detection, deepfake detection, LLM text detection, AI image detection, audio deepfake, benchmark, toolkit">
+  <title>DetectZoo: A Unified Toolkit for AI-Generated Content Detection</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/DetectZoo_logo.png">
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <img src="./static/images/DetectZoo_logo.png" alt="DetectZoo logo" class="zoo-logo">
+          <h1 class="title is-2 publication-title">
+            DetectZoo
+          </h1>
+          <h2 class="subtitle is-4 publication-subtitle">
+            A Unified Toolkit for AI-Generated Content Detection<br>
+            Across Text, Audio, and Image Modalities
+          </h2>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><a href="https://github.com/sadjadeb">Sajad Ebrahimi</a><sup>1</sup>,</span>
+            <span class="author-block">Nima Jamali<sup>2</sup>,</span>
+            <span class="author-block">Bardia Shirsalimian<sup>3</sup>,</span>
+            <span class="author-block">Kelly McConvey<sup>1</sup>,</span>
+            <span class="author-block">Wentao Zhang<sup>2</sup>,</span>
+            <span class="author-block">Jalehsadat Mahdavimoghaddam<sup>1</sup>,</span>
+            <span class="author-block">Maksym Taranukhin<sup>4,5</sup>,</span>
+            <span class="author-block">Maura Grossman<sup>2</sup>,</span>
+            <span class="author-block">Vered Shwartz<sup>4,5</sup>,</span>
+            <span class="author-block">Yuntian Deng<sup>2</sup>,</span>
+            <span class="author-block">Ebrahim Bagheri<sup>1</sup></span>
+          </div>
+
+          <div class="is-size-6 publication-affiliations">
+            <span class="affiliation-block"><sup>1</sup>University of Toronto</span>
+            <span class="affiliation-block"><sup>2</sup>University of Waterloo</span>
+            <span class="affiliation-block"><sup>3</sup>Toronto Metropolitan University</span>
+            <span class="affiliation-block"><sup>4</sup>University of British Columbia</span>
+            <span class="affiliation-block"><sup>5</sup>Vector Institute</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2506.00000" class="external-link button is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/sadjadeb/DetectZoo" class="external-link button is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-github"></i></span>
+                  <span>Code</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://pypi.org/project/detectzoo/" class="external-link button is-rounded is-dark">
+                  <span class="icon"><i class="fab fa-python"></i></span>
+                  <span>PyPI</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://github.com/sadjadeb/DetectZoo/blob/main/METHODS_AND_MODELS.md" class="external-link button is-rounded is-dark">
+                  <span class="icon"><i class="fas fa-book"></i></span>
+                  <span>Docs</span>
+                </a>
+              </span>
+            </div>
+          </div>
+
+          <div class="install-pill">
+            <code>pip install detectzoo</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATS ===================== -->
+<section class="section stats-section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column"><p class="stat-number">61</p><p class="stat-label">Detectors</p></div>
+      <div class="column"><p class="stat-number">22</p><p class="stat-label">Benchmark datasets</p></div>
+      <div class="column"><p class="stat-number">3</p><p class="stat-label">Modalities</p></div>
+      <div class="column"><p class="stat-number">1</p><p class="stat-label">Unified API</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ABSTRACT ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            The growing popularity and capacity of generative models have eroded the distinction between human
+            and machine-generated content, motivating a growing body of work on detection across text, images,
+            and audio. Most available detectors are either commercial software or, if open-source, come with
+            incompatible codebases with bespoke preprocessing, evaluation protocols, and evaluation metrics,
+            which make their adoption, fair comparison, and reproduction quite difficult.
+          </p>
+          <p>
+            To address this critical gap, we introduce <strong>DetectZoo</strong>, a first-of-its-kind, extensible
+            toolkit designed to provide a unified interface for AI-generated content detection across text, audio,
+            and image modalities. DetectZoo standardizes the complete empirical pipeline, from data ingestion and
+            preprocessing to model assessment, offering researchers a cohesive framework to benchmark
+            state-of-the-art detectors systematically. DetectZoo provides reference implementations of
+            <strong>61 detectors</strong>, native loaders for <strong>22 benchmark datasets</strong>, and a
+            standardized evaluation pipeline that reports multiple metrics through a common interface. Each
+            detector is self-contained yet accessible through the same interface, automatically caches pretrained
+            weights, and reproduces the original published results.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== WHAT IS DETECTZOO ===================== -->
+<section class="section is-light-bg">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">What is DetectZoo?</h2>
+        <div class="content has-text-justified">
+          <p>
+            Detection methods for AI-generated content live in entirely separate ecosystems. Each new method is
+            typically released as a standalone codebase with its own preprocessing, datasets, and metrics. This
+            fragmentation produces three obstacles: <strong>(1) lack of fair comparison</strong>,
+            <strong>(2) reproducibility barriers</strong>, and <strong>(3) no cross-modal perspective</strong>.
+            DetectZoo aggregates 61 detection methods across three modalities into a single codebase with one
+            consistent interface, paired with 22 benchmark datasets and a standardized evaluation pipeline.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-one-third">
+        <div class="feature-card">
+          <span class="icon is-large feature-icon"><i class="fas fa-rotate-right"></i></span>
+          <h3 class="title is-5">Reproducible</h3>
+          <p>Clean, standardized implementations of published detectors, validated against the authors' originally reported results.</p>
+        </div>
+      </div>
+      <div class="column is-one-third">
+        <div class="feature-card">
+          <span class="icon is-large feature-icon"><i class="fas fa-bolt"></i></span>
+          <h3 class="title is-5">Accessible</h3>
+          <p>Load and run any detector with a single function call. Pretrained weights and datasets download and cache automatically.</p>
+        </div>
+      </div>
+      <div class="column is-one-third">
+        <div class="feature-card">
+          <span class="icon is-large feature-icon"><i class="fas fa-puzzle-piece"></i></span>
+          <h3 class="title is-5">Extensible</h3>
+          <p>Adding a new detector takes a single file: subclass <code>BaseDetector</code>, implement <code>predict</code>, and register with a decorator.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== QUICK START ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">One API, every modality</h2>
+        <p class="subtitle is-6 has-text-grey">
+          Every <code>predict()</code> call returns the same <code>DetectionResult</code> &mdash; a score, a label, a confidence, and detector-specific metadata.
+        </p>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+<pre class="code-block"><code><span class="c-kw">from</span> detectzoo <span class="c-kw">import</span> load_detector, list_detectors
+
+<span class="c-cm"># Detect AI-generated text</span>
+detector = load_detector(<span class="c-st">"fast_detectgpt"</span>)
+result = detector.predict(<span class="c-st">"Large language models are transforming many fields."</span>)
+<span class="c-fn">print</span>(result.score, result.label, result.confidence)
+
+<span class="c-cm"># Detect AI-generated images</span>
+detector = load_detector(<span class="c-st">"aeroblade"</span>)
+<span class="c-fn">print</span>(detector.predict(<span class="c-st">"image.png"</span>).label)   <span class="c-cm"># "ai" or "human"</span>
+
+<span class="c-cm"># Detect synthetic audio</span>
+detector = load_detector(<span class="c-st">"rawnet2"</span>)
+<span class="c-fn">print</span>(detector.predict(<span class="c-st">"speech.wav"</span>).score)
+
+<span class="c-cm"># Discover what's available</span>
+<span class="c-fn">print</span>(list_detectors(<span class="c-st">"text"</span>), list_detectors(<span class="c-st">"image"</span>), list_detectors(<span class="c-st">"audio"</span>))</code></pre>
+      </div>
+    </div>
+
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <p class="subtitle is-6 has-text-grey">Benchmark detectors head-to-head on any labelled dataset:</p>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+<pre class="code-block"><code><span class="c-kw">from</span> detectzoo <span class="c-kw">import</span> load_detector
+<span class="c-kw">from</span> detectzoo.datasets <span class="c-kw">import</span> HC3Dataset
+<span class="c-kw">from</span> detectzoo.benchmarks <span class="c-kw">import</span> BenchmarkEvaluator
+
+dataset = HC3Dataset(subsets=[<span class="c-st">"finance"</span>])            <span class="c-cm"># auto-downloads + caches</span>
+evaluator = BenchmarkEvaluator(dataset)
+evaluator.run_and_print([
+    load_detector(<span class="c-st">"log_likelihood"</span>),
+    load_detector(<span class="c-st">"entropy"</span>),
+    load_detector(<span class="c-st">"fast_detectgpt"</span>),
+])   <span class="c-cm"># prints accuracy, precision, recall, F1, AUROC</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== DETECTORS ===================== -->
+<section class="section is-light-bg">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">61 detectors across three modalities</h2>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column">
+        <div class="modality-card">
+          <h3 class="title is-4"><span class="icon"><i class="fas fa-align-left"></i></span> Text <span class="count-badge">36</span></h3>
+          <p class="has-text-grey-dark">Zero-shot statistical, perturbation-based, multi-model, representation analysis, supervised, and OOD methods.</p>
+          <p class="example-line">Fast-DetectGPT &middot; Binoculars &middot; DetectGPT &middot; LRR &middot; GECScore &middot; RADAR &middot; RoBERTa &middot; PHD &middot; ReMoDetect &middot; ImBD &middot; &hellip;</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="modality-card">
+          <h3 class="title is-4"><span class="icon"><i class="fas fa-image"></i></span> Image <span class="count-badge">15</span></h3>
+          <p class="has-text-grey-dark">Artifact / frequency-based, CLIP / representation-based, and training-free reconstruction methods.</p>
+          <p class="example-line">CNNSpot &middot; LGrad &middot; FreqNet &middot; UnivFD &middot; FatFormer &middot; AIDE &middot; DRCT &middot; AEROBLADE &middot; C2P-CLIP &middot; SAFE &middot; &hellip;</p>
+        </div>
+      </div>
+      <div class="column">
+        <div class="modality-card">
+          <h3 class="title is-4"><span class="icon"><i class="fas fa-wave-square"></i></span> Audio <span class="count-badge">10</span></h3>
+          <p class="has-text-grey-dark">End-to-end / graph-based waveform models and self-supervised (SSL) foundation-model detectors.</p>
+          <p class="example-line">RawNet2 &middot; AASIST &middot; RawGAT-ST &middot; Res-TSSDNet &middot; SAMO &middot; AST-ASVspoof &middot; Wav2Vec / HuBERT / XLS-R &middot; &hellip;</p>
+        </div>
+      </div>
+    </div>
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <p class="has-text-grey">
+          See the full
+          <a href="https://github.com/sadjadeb/DetectZoo/blob/main/METHODS_AND_MODELS.md">methods &amp; models reference</a>
+          for every registry name, implementation class, and method summary.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RESULTS ===================== -->
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Reproducing published results</h2>
+        <div class="content has-text-justified">
+          <p>
+            For each detector with publicly reported metrics, DetectZoo re-runs the original experimental setup and
+            validates its outputs against the authors' reported numbers. We reproduce findings from four recent
+            studies across six benchmark scenarios. The standardized pipeline tracks the originals closely &mdash;
+            for example, on cross-task XSum detection our reproduced average AUROC of <strong>0.6438</strong>
+            tightly mirrors the published <strong>0.6335</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+        <table class="table is-fullwidth is-hoverable results-table">
+          <thead>
+            <tr>
+              <th>Benchmark scenario</th>
+              <th>Top method</th>
+              <th class="has-text-centered">AUROC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Cross-dataset &mdash; Rewrite (WritingPrompts)</td><td>ReMoDetect</td><td class="has-text-centered">0.9765</td></tr>
+            <tr><td>Cross-dataset &mdash; Polish (XSum)</td><td>ImBD</td><td class="has-text-centered">0.9729</td></tr>
+            <tr><td>GECScore benchmark (WritingPrompts)</td><td>Fast-DetectGPT</td><td class="has-text-centered">0.9932</td></tr>
+            <tr><td>Text Fluoroscopy suite (ChatGPT)</td><td>RADAR</td><td class="has-text-centered">0.8980</td></tr>
+            <tr><td>RAID benchmark (overall)</td><td>RADAR</td><td class="has-text-centered">0.8263</td></tr>
+          </tbody>
+        </table>
+        <p class="has-text-grey is-size-7 has-text-centered">
+          Selected headline results. Full per-task tables for all text, image, and audio detectors are reported in the paper.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ADD A DETECTOR ===================== -->
+<section class="section is-light-bg">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Add your own detector in one file</h2>
+      </div>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-four-fifths">
+<pre class="code-block"><code><span class="c-kw">from</span> detectzoo.detectors <span class="c-kw">import</span> BaseDetector
+<span class="c-kw">from</span> detectzoo.core.registry <span class="c-kw">import</span> register_detector
+
+<span class="c-dec">@register_detector(<span class="c-st">"my_detector"</span>)</span>
+<span class="c-kw">class</span> <span class="c-fn">MyDetector</span>(BaseDetector):
+    modality = <span class="c-st">"text"</span>   <span class="c-cm"># or "image" or "audio"</span>
+
+    <span class="c-kw">def</span> <span class="c-fn">predict</span>(self, input_data):
+        score = 0.0   <span class="c-cm"># your detection logic here</span>
+        <span class="c-kw">return</span> self._make_result(score)
+
+<span class="c-cm"># Immediately available everywhere:</span>
+<span class="c-kw">from</span> detectzoo <span class="c-kw">import</span> load_detector
+detector = load_detector(<span class="c-st">"my_detector"</span>)</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BIBTEX ===================== -->
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title is-3">BibTeX</h2>
+    <pre class="bibtex-block"><code>@misc{ebrahimi2026detectzoo,
+  title         = {DetectZoo: A Unified Toolkit for AI-Generated Content Detection
+                   Across Text, Audio, and Image Modalities},
+  author        = {Ebrahimi, Sajad and Jamali, Nima and Shirsalimian, Bardia and
+                   McConvey, Kelly and Zhang, Wentao and Mahdavimoghaddam, Jalehsadat and
+                   Taranukhin, Maksym and Grossman, Maura and Shwartz, Vered and
+                   Deng, Yuntian and Bagheri, Ebrahim},
+  year          = {2026},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.LG},
+  url           = {https://github.com/sadjadeb/DetectZoo}
+}</code></pre>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>
+            <a class="icon-link" href="https://github.com/sadjadeb/DetectZoo"><i class="fab fa-github"></i></a>
+            <a class="icon-link" href="https://pypi.org/project/detectzoo/"><i class="fab fa-python"></i></a>
+          </p>
+          <p>
+            This page is built on the
+            <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a> project page template
+            (<a href="http://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>).
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

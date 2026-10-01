@@ -1,0 +1,243 @@
+body {
+  font-family: 'Noto Sans', sans-serif;
+  color: #363636;
+}
+
+.title,
+.publication-title,
+.publication-subtitle {
+  font-family: 'Google Sans', 'Noto Sans', sans-serif;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  background: linear-gradient(160deg, #f7f9fc 0%, #eef2f9 100%);
+  padding-top: 2.5rem;
+}
+
+.zoo-logo {
+  max-width: 130px;
+  height: auto;
+  margin-bottom: 1.2rem;
+}
+
+.publication-title {
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem !important;
+  color: #1a1a2e;
+}
+
+.publication-subtitle {
+  color: #4a4a6a;
+  margin-bottom: 1.6rem !important;
+}
+
+.publication-authors {
+  margin-bottom: 0.6rem;
+  line-height: 1.7;
+}
+
+.author-block {
+  margin: 0 0.15rem;
+}
+
+.publication-authors a {
+  color: #3273dc;
+}
+
+.publication-affiliations {
+  color: #6b6b80;
+  margin-bottom: 1.5rem;
+}
+
+.affiliation-block {
+  margin: 0 0.6rem;
+  white-space: nowrap;
+}
+
+.publication-links {
+  margin-top: 0.5rem;
+}
+
+.publication-links .link-block {
+  margin: 0.25rem;
+  display: inline-block;
+}
+
+.publication-links .button.is-dark {
+  background-color: #1a1a2e;
+}
+
+.publication-links .button.is-dark:hover {
+  background-color: #2d2d4d;
+}
+
+.install-pill {
+  margin-top: 1.6rem;
+}
+
+.install-pill code {
+  background: #1a1a2e;
+  color: #8ce0c0;
+  padding: 0.55rem 1.2rem;
+  border-radius: 999px;
+  font-size: 1rem;
+}
+
+/* ---------- Stats ---------- */
+.stats-section {
+  padding: 2.2rem 1.5rem;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+.stat-number {
+  font-family: 'Google Sans', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #8ce0c0;
+}
+
+.stat-label {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.85rem;
+  color: #c9c9d8;
+  margin-top: 0.3rem;
+}
+
+/* ---------- Sections ---------- */
+.is-light-bg {
+  background: #f7f9fc;
+}
+
+.section .title.is-3 {
+  margin-bottom: 1.5rem;
+}
+
+/* ---------- Feature cards ---------- */
+.feature-card {
+  background: #fff;
+  border: 1px solid #e7ebf3;
+  border-radius: 14px;
+  padding: 1.8rem 1.4rem;
+  height: 100%;
+  text-align: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.feature-card:hover {
+  box-shadow: 0 10px 30px rgba(26, 26, 46, 0.1);
+  transform: translateY(-3px);
+}
+
+.feature-icon {
+  color: #3273dc;
+  font-size: 1.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.feature-card h3 {
+  color: #1a1a2e;
+}
+
+/* ---------- Modality cards ---------- */
+.modality-card {
+  background: #fff;
+  border: 1px solid #e7ebf3;
+  border-radius: 14px;
+  padding: 1.6rem;
+  height: 100%;
+}
+
+.modality-card .icon {
+  color: #3273dc;
+}
+
+.count-badge {
+  background: #8ce0c0;
+  color: #14392c;
+  border-radius: 999px;
+  padding: 0.1rem 0.7rem;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+}
+
+.example-line {
+  margin-top: 0.8rem;
+  color: #5a5a72;
+  font-size: 0.9rem;
+}
+
+/* ---------- Code blocks ---------- */
+.code-block {
+  background: #1a1a2e;
+  color: #e6e6f0;
+  border-radius: 10px;
+  padding: 1.3rem 1.5rem;
+  overflow-x: auto;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.code-block .c-kw { color: #c792ea; }
+.code-block .c-st { color: #8ce0c0; }
+.code-block .c-cm { color: #6b7394; font-style: italic; }
+.code-block .c-fn { color: #82aaff; }
+.code-block .c-dec { color: #ffcb6b; }
+
+/* ---------- Results table ---------- */
+.results-table {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.results-table thead th {
+  background: #1a1a2e;
+  color: #fff;
+  border: none;
+}
+
+.results-table tbody td {
+  vertical-align: middle;
+}
+
+/* ---------- BibTeX ---------- */
+.bibtex-block {
+  background: #f4f6fb;
+  border: 1px solid #e7ebf3;
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  font-size: 0.85rem;
+  overflow-x: auto;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+  background: #f7f9fc;
+  padding: 2.5rem 1.5rem 3rem;
+}
+
+.icon-link {
+  font-size: 1.4rem;
+  color: #1a1a2e;
+  margin: 0 0.5rem;
+}
+
+.icon-link:hover {
+  color: #3273dc;
+}
+
+@media screen and (max-width: 768px) {
+  .affiliation-block {
+    display: block;
+    margin: 0.1rem 0;
+  }
+  .stat-number {
+    font-size: 2.1rem;
+  }
+}
