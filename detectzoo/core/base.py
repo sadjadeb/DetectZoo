@@ -42,7 +42,7 @@ class BaseDetector(ABC):
     """
 
     name: str = ""
-    modality: str = ""  # "text", "image", or "audio"
+    modality: str = ""  # "text", "image", "audio", or "video"
 
     def __init__(self, threshold: float = 0.5, device: str = "cpu", **kwargs: Any) -> None:
         self.threshold = threshold
