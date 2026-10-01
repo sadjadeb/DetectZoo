@@ -1,67 +1,142 @@
-body {
-  font-family: 'Noto Sans', sans-serif;
-  color: #363636;
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'DM Sans', sans-serif;
 }
 
-.title,
-.publication-title,
-.publication-subtitle {
-  font-family: 'Google Sans', 'Noto Sans', sans-serif;
+body {
+  color: #363636;
+  overflow-x: hidden;
+}
+
+/* One content width for prose, cards, code, and the table. */
+.container.is-max-desktop {
+  max-width: 980px;
+}
+
+.column.is-four-fifths {
+  flex: none;
+  width: 100%;
+}
+
+/* Bulma columns use a negative margin and column padding. Flatten
+   both so text, cards, code, and the table share the same edges. */
+.container.is-max-desktop > .columns {
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+}
+
+.container.is-max-desktop > .columns > .column {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* ---------- Hero ---------- */
 .hero {
   background: linear-gradient(160deg, #f7f9fc 0%, #eef2f9 100%);
-  padding-top: 2.5rem;
+}
+
+.hero-body {
+  padding: 3.25rem 1.5rem 2.75rem;
+}
+
+/* The logo file is a 1254px square with the artwork inset
+   (content box 230,273–1042,959). Negative margins cancel that
+   blank border so it does not add space around the mark. */
+.zoo-logo-wrap {
+  width: min(22rem, 100%);
+  margin: 0 auto 1.5rem;
+  aspect-ratio: 813 / 687;
+  overflow: hidden;
 }
 
 .zoo-logo {
-  max-width: 130px;
+  display: block;
+  width: calc(100% * 1254 / 813);
+  max-width: none;
   height: auto;
-  margin-bottom: 1.2rem;
-}
-
-.publication-title {
-  letter-spacing: 0.5px;
-  margin-bottom: 0.4rem !important;
-  color: #1a1a2e;
+  margin-left: calc(100% * -230 / 813);
+  margin-top: calc(100% * -273 / 813);
 }
 
 .publication-subtitle {
-  color: #4a4a6a;
-  margin-bottom: 1.6rem !important;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #4a4a4a;
+  line-height: 1.35;
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1.5rem !important;
+  text-wrap: balance;
 }
 
 .publication-authors {
-  margin-bottom: 0.6rem;
-  line-height: 1.7;
+  font-size: 1rem !important;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.35rem;
+  row-gap: 0.15rem;
+  max-width: 46rem;
+  margin: 0 auto 0.75rem;
+  line-height: 1.5;
 }
 
 .author-block {
-  margin: 0 0.15rem;
+  margin: 0;
 }
 
 .publication-authors a {
   color: #3273dc;
 }
 
+.publication-authors sup,
+.publication-affiliations sup {
+  font-size: 0.68em;
+  line-height: 0;
+}
+
 .publication-affiliations {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 1.15rem;
+  row-gap: 0.3rem;
+  max-width: 42rem;
+  margin: 0 auto 1.6rem;
   color: #6b6b80;
-  margin-bottom: 1.5rem;
 }
 
 .affiliation-block {
-  margin: 0 0.6rem;
+  margin: 0;
   white-space: nowrap;
 }
 
 .publication-links {
-  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
 }
 
-.publication-links .link-block {
-  margin: 0.25rem;
-  display: inline-block;
+.publication-links .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.6rem;
+  margin: 0;
+  padding: 0 1.15rem;
+  border: none;
+}
+
+.publication-links .button .icon {
+  margin: 0 !important;
+  height: 1.15rem;
+  width: 1.15rem;
 }
 
 .publication-links .button.is-dark {
@@ -72,39 +147,37 @@ body {
   background-color: #2d2d4d;
 }
 
-.install-pill {
-  margin-top: 1.6rem;
-}
-
-.install-pill code {
-  background: #1a1a2e;
-  color: #8ce0c0;
-  padding: 0.55rem 1.2rem;
-  border-radius: 999px;
-  font-size: 1rem;
-}
-
 /* ---------- Stats ---------- */
 .stats-section {
-  padding: 2.2rem 1.5rem;
+  padding: 2rem 1.5rem;
   background: #1a1a2e;
   color: #fff;
 }
 
+.stats-grid {
+  margin: 0;
+}
+
+.stats-grid .column {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
 .stat-number {
-  font-family: 'Google Sans', sans-serif;
-  font-size: 2.8rem;
+  font-size: 2.75rem;
   font-weight: 700;
   line-height: 1;
   color: #8ce0c0;
+  margin-bottom: 0.35rem;
 }
 
 .stat-label {
   text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: #c9c9d8;
-  margin-top: 0.3rem;
+  margin: 0;
 }
 
 /* ---------- Sections ---------- */
@@ -113,7 +186,32 @@ body {
 }
 
 .section .title.is-3 {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.section .content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Inline code in prose, not in fenced blocks. */
+.section code,
+.subtitle code {
+  background: #e7f6f0;
+  color: #14684a;
+  padding: 0.06em 0.28em;
+  border-radius: 5px;
+  font-family: 'Source Code Pro', ui-monospace, monospace;
+  font-size: 0.88em;
+  vertical-align: baseline;
+  white-space: nowrap;
+}
+
+/* ---------- Shared card grid ---------- */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.15rem;
+  align-items: stretch;
 }
 
 /* ---------- Feature cards ---------- */
@@ -121,9 +219,11 @@ body {
   background: #fff;
   border: 1px solid #e7ebf3;
   border-radius: 14px;
-  padding: 1.8rem 1.4rem;
-  height: 100%;
+  padding: 1.6rem 1.25rem 1.45rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -133,13 +233,27 @@ body {
 }
 
 .feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.85rem;
+  border-radius: 12px;
+  background: #eef3ff;
   color: #3273dc;
-  font-size: 1.8rem;
-  margin-bottom: 0.6rem;
+  font-size: 1.2rem;
 }
 
 .feature-card h3 {
   color: #1a1a2e;
+  margin-bottom: 0.55rem !important;
+}
+
+.feature-card p {
+  margin: 0;
+  color: #4a4a4a;
+  line-height: 1.55;
 }
 
 /* ---------- Modality cards ---------- */
@@ -147,40 +261,87 @@ body {
   background: #fff;
   border: 1px solid #e7ebf3;
   border-radius: 14px;
-  padding: 1.6rem;
-  height: 100%;
+  padding: 1.35rem 1.3rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.modality-card h3.title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.85rem !important;
+  line-height: 1;
+  font-size: 1.35rem;
 }
 
 .modality-card .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 1.35rem;
+  height: 1.35rem;
   color: #3273dc;
+  font-size: 1.05rem;
+}
+
+.modality-card .card-name {
+  line-height: 1;
 }
 
 .count-badge {
+  margin-left: auto;
   background: #8ce0c0;
   color: #14392c;
   border-radius: 999px;
-  padding: 0.1rem 0.7rem;
-  font-size: 1rem;
+  padding: 0.18rem 0.65rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  margin-left: 0.3rem;
-  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.modality-card .has-text-grey-dark {
+  margin-bottom: 0;
+  line-height: 1.5;
 }
 
 .example-line {
-  margin-top: 0.8rem;
+  margin-top: auto;
+  margin-bottom: 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e7ebf3;
   color: #5a5a72;
   font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 /* ---------- Code blocks ---------- */
+.code-block,
+.bibtex-block {
+  font-family: 'Source Code Pro', ui-monospace, monospace;
+}
+
 .code-block {
   background: #1a1a2e;
   color: #e6e6f0;
-  border-radius: 10px;
-  padding: 1.3rem 1.5rem;
+  border-radius: 12px;
+  padding: 1.25rem 1.35rem;
   overflow-x: auto;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.code-block code,
+.bibtex-block code {
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+  white-space: pre;
 }
 
 .code-block .c-kw { color: #c792ea; }
@@ -189,43 +350,37 @@ body {
 .code-block .c-fn { color: #82aaff; }
 .code-block .c-dec { color: #ffcb6b; }
 
-/* ---------- Results table ---------- */
-.results-table {
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.results-table thead th {
-  background: #1a1a2e;
-  color: #fff;
-  border: none;
-}
-
-.results-table tbody td {
-  vertical-align: middle;
-}
-
 /* ---------- BibTeX ---------- */
 .bibtex-block {
   background: #f4f6fb;
   border: 1px solid #e7ebf3;
-  border-radius: 10px;
-  padding: 1.2rem 1.4rem;
-  font-size: 0.85rem;
+  border-radius: 12px;
+  padding: 1.15rem 1.3rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
   overflow-x: auto;
+  margin: 0;
 }
 
 /* ---------- Footer ---------- */
 .footer {
   background: #f7f9fc;
-  padding: 2.5rem 1.5rem 3rem;
+  padding: 2.25rem 1.5rem 2.5rem;
+}
+
+.footer .content p:last-child {
+  margin-bottom: 0;
 }
 
 .icon-link {
-  font-size: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  font-size: 1.35rem;
   color: #1a1a2e;
-  margin: 0 0.5rem;
+  margin: 0 0.25rem;
 }
 
 .icon-link:hover {
@@ -233,11 +388,49 @@ body {
 }
 
 @media screen and (max-width: 768px) {
-  .affiliation-block {
-    display: block;
-    margin: 0.1rem 0;
+  .hero-body {
+    padding: 2.4rem 1.1rem 2rem;
   }
+
+  .publication-subtitle {
+    font-size: 1.15rem !important;
+    margin-top: 0.15rem !important;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.15rem 0.5rem;
+  }
+
+  .stats-grid .column {
+    width: auto;
+    padding: 0.15rem 0.4rem;
+  }
+
   .stat-number {
-    font-size: 2.1rem;
+    font-size: 2.15rem;
+  }
+
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section {
+    padding: 2.4rem 1.15rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .publication-links {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(100%, 16.5rem);
+    margin-inline: auto;
+  }
+
+  .publication-links .button {
+    width: 100%;
+    justify-content: center;
   }
 }
