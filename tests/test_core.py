@@ -78,6 +78,7 @@ class TestRegistry:
             "coco",
             "roberta_base",
             "roberta_large",
+            "remodetect",
         }
         missing = expected - text
         assert not missing, f"Missing expected text detectors: {missing}"
