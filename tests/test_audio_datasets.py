@@ -112,16 +112,10 @@ def test_deepfake_eval_2024_metadata(tmp_path: Path) -> None:
     root = tmp_path / "dfeval"
     (root / "audio-data").mkdir(parents=True)
     with open(root / "audio-metadata-publish.csv", "w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(
-            fh, fieldnames=["Filename", "Ground Truth", "Finetuning Set"]
-        )
+        writer = csv.DictWriter(fh, fieldnames=["Filename", "Ground Truth", "Finetuning Set"])
         writer.writeheader()
-        writer.writerow(
-            {"Filename": "r.mp3", "Ground Truth": "real", "Finetuning Set": "train"}
-        )
-        writer.writerow(
-            {"Filename": "f.mp3", "Ground Truth": "fake", "Finetuning Set": "test"}
-        )
+        writer.writerow({"Filename": "r.mp3", "Ground Truth": "real", "Finetuning Set": "train"})
+        writer.writerow({"Filename": "f.mp3", "Ground Truth": "fake", "Finetuning Set": "test"})
     (root / "audio-data" / "r.mp3").write_bytes(b"0")
     (root / "audio-data" / "f.mp3").write_bytes(b"1")
 
@@ -134,8 +128,7 @@ def test_load_dataset_aliases(tmp_path: Path) -> None:
     dfeval_root = tmp_path / "dfeval"
     (dfeval_root / "audio-data").mkdir(parents=True)
     (dfeval_root / "audio-metadata-publish.csv").write_text(
-        "Filename,Ground Truth,Finetuning Set\n"
-        "x.mp3,real,train\n",
+        "Filename,Ground Truth,Finetuning Set\nx.mp3,real,train\n",
         encoding="utf-8",
     )
     (dfeval_root / "audio-data" / "x.mp3").write_bytes(b"1")

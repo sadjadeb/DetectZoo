@@ -69,6 +69,13 @@ exclude = ["tests*"]
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+# Upstream audio model copies; do not reformat or lint as first-party code.
+extend-exclude = [
+    "detectzoo/detectors/audio/safeear",
+    "detectzoo/detectors/audio/tcm",
+    "detectzoo/detectors/audio/xlsr_mamba",
+    "detectzoo/detectors/audio/raw_pc_darts",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
