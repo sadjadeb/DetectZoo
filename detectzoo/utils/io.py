@@ -71,7 +71,7 @@ def load_video(
 ) -> Tuple[np.ndarray, float]:
     """Load the frames of a video file as RGB.
 
-    Uses OpenCV (``cv2``), which is not a hard dependency of DetectZoo.
+    Uses OpenCV (``cv2``) for decoding.
     If *max_frames* is given, decoding stops after that many frames.
 
     Returns:
