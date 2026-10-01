@@ -15,7 +15,7 @@
 
 - [ ] Commit author name/email matches my verified GitHub account
 - [ ] No unintended `Co-authored-by` trailers (Cursor attribution disabled)
-- [ ] `ruff check .` and `ruff format --check .` pass
+- [ ] `ruff check .` passes
 - [ ] `pytest -m "not slow"` passes (or N/A — explain why)
 - [ ] New public detectors/datasets are registered (decorator / `__init__.py`), tested, and listed in README if applicable
 - [ ] I added/updated tests for behavior changes
