@@ -78,6 +78,7 @@ class TestRegistry:
             "coco",
             "roberta_base",
             "roberta_large",
+            "chatgpt_detector",
             "remodetect",
         }
         missing = expected - text
@@ -91,6 +92,8 @@ class TestRegistry:
         # roberta aliases are pure-text and resolve without any download.
         assert _ALIASES.get("roberta_openai_base") == "roberta_base"
         assert _ALIASES.get("roberta_openai_large") == "roberta_large"
+        assert _ALIASES.get("chatgpt_roberta") == "chatgpt_detector"
+        assert _ALIASES.get("chat_d") == "chatgpt_detector"
         # Every alias must point at a real, registered detector.
         for alias, target in _ALIASES.items():
             assert target in _REGISTRY, f"Alias {alias!r} -> unknown target {target!r}"
