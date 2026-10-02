@@ -13,7 +13,7 @@ from detectzoo.core.registry import (
     load_detector,
 )
 
-VALID_MODALITIES = {"text", "image", "audio"}
+VALID_MODALITIES = {"text", "image", "audio", "video"}
 
 
 class TestDetectionResult:

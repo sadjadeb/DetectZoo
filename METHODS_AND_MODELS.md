@@ -10,7 +10,7 @@ from detectzoo import load_detector
 det = load_detector("fast_detectgpt")
 ```
 
-List names programmatically with `list_detectors()` and `list_detectors("text" | "image" | "audio")`.
+List names programmatically with `list_detectors()` and `list_detectors("text" | "image" | "audio" | "video")`.
 
 ---
 
@@ -146,6 +146,16 @@ Detectors for synthetic speech and deepfake audio. Each accepts an audio file pa
 | `anti_deepfake_hubert` | `AntiDeepfakeHubertDetector` | SSL post-training of HuBERT-XLarge on 74k hrs speech. (Ge et al., 2022) |
 | `anti_deepfake_xlsr2b` | `AntiDeepfakeXLSR2BDetector` | SSL post-training of XLS-R-2B on 74k hrs speech. (Ge et al., 2022) |
 | `xlsr_sls` | `XLSRSLSDetector` | Sensitive layer selection over XLS-R backbone. (Zhang et al., 2022) |
+
+### Video
+
+Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, C]` / `[T, C, H, W]` frame array or tensor, or a list of PIL `Image` frames.
+
+**Frame-level methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `waverep` | `WaveRepDetector` | DINOv2 ViT fine-tuned frame-by-frame with wavelet-based forensic augmentation; averages frame logits over the first 64 frames. `variant="G4"` (default) is trained on four generators, `variant="G1"` on Pyramid Flow only. (Corvi et al., NeurIPS 2025) |
 
 ---
 
