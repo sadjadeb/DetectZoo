@@ -6,6 +6,11 @@ textarea {
   font-family: 'DM Sans', sans-serif;
 }
 
+html,
+body {
+  background: #fefefe;
+}
+
 body {
   color: #363636;
   overflow-x: hidden;
@@ -36,7 +41,7 @@ body {
 
 /* ---------- Hero ---------- */
 .hero {
-  background: linear-gradient(160deg, #f7f9fc 0%, #eef2f9 100%);
+  background: #fefefe;
 }
 
 .hero-body {
@@ -182,7 +187,7 @@ body {
 
 /* ---------- Sections ---------- */
 .is-light-bg {
-  background: #f7f9fc;
+  background: #fefefe;
 }
 
 .section .title.is-3 {
@@ -364,7 +369,7 @@ body {
 
 /* ---------- Footer ---------- */
 .footer {
-  background: #f7f9fc;
+  background: #fefefe;
   padding: 2.25rem 1.5rem 2.5rem;
 }
 
