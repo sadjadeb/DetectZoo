@@ -21,6 +21,16 @@ Usage::
     python gecscore_replicate.py --data-url <url>   # single file (legacy)
 
 Results: one JSON per (source, model) file under ``experiments/``.
+
+The paper's headline AUROC (98.62%) is GECScore with GPT-4o-mini, not
+CoEdit.  The default detector is local COEDIT-L.  Pass
+``--gec-backend openai`` (and set ``OPENAI_API_KEY``) to reproduce the
+GPT-4o-mini row.
+
+Each result JSON reports ``f1`` at the detector's fixed threshold and
+``youden_f1`` at the cutoff that maximizes true-positive rate minus
+false-positive rate on that file.  The paper's Table 1 F1 is the
+Youden figure.
 """
 
 from __future__ import annotations
@@ -244,6 +254,32 @@ class GECScoreJsonDataset(BaseDataset):
 # ---------------------------------------------------------------------------
 
 
+def _youden_metrics(labels: List[int], scores: List[float]) -> dict:
+    """F1 at the cutoff that maximizes TPR minus FPR on these scores."""
+    import numpy as np
+    from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_curve
+
+    labels_arr = np.asarray(labels, dtype=int)
+    scores_arr = np.asarray(scores, dtype=float)
+    finite = np.isfinite(scores_arr)
+    labels_arr = labels_arr[finite]
+    scores_arr = scores_arr[finite]
+    if labels_arr.size == 0 or len(np.unique(labels_arr)) < 2:
+        return {}
+
+    fpr, tpr, thresholds = roc_curve(labels_arr, scores_arr)
+    idx = int(np.argmax(tpr - fpr))
+    threshold = float(thresholds[idx])
+    preds = (scores_arr >= threshold).astype(int)
+    return {
+        "youden_threshold": threshold,
+        "youden_f1": float(f1_score(labels_arr, preds, zero_division=0)),
+        "youden_precision": float(precision_score(labels_arr, preds, zero_division=0)),
+        "youden_recall": float(recall_score(labels_arr, preds, zero_division=0)),
+        "youden_accuracy": float(accuracy_score(labels_arr, preds)),
+    }
+
+
 def _safe_slug(s: str) -> str:
     s = s.strip()
     s = re.sub(r"[^a-zA-Z0-9._-]+", "_", s)
@@ -288,6 +324,27 @@ def parse_args() -> argparse.Namespace:
         "--max-samples", type=int, default=None, help="Cap samples per file for quick debug runs."
     )
     p.add_argument("--device", type=str, default="cuda", help="Device for detectors.")
+    p.add_argument(
+        "--gec-backend",
+        choices=("coedit", "openai"),
+        default="coedit",
+        help=(
+            "GECScore corrector. 'coedit' is local COEDIT-L (Table 1 secondary row). "
+            "'openai' is GPT-4o-mini, the headline row, and needs OPENAI_API_KEY."
+        ),
+    )
+    p.add_argument(
+        "--gec-model",
+        type=str,
+        default=None,
+        help="HuggingFace GEC model when --gec-backend=coedit (default grammarly/coedit-large).",
+    )
+    p.add_argument(
+        "--openai-model",
+        type=str,
+        default="gpt-4o-mini",
+        help="Chat model when --gec-backend=openai.",
+    )
     p.add_argument(
         "--detectors", nargs="+", default=DEFAULT_DETECTOR_NAMES, help="Detector registry names."
     )
@@ -356,11 +413,20 @@ def main() -> None:
         for f in files:
             print(f"  - {f.slug}")
 
-    print(f"\nLoading {len(args.detectors)} detector(s) on {args.device} …")
+    print(
+        f"\nLoading {len(args.detectors)} detector(s) on {args.device}"
+        f" (gec backend={args.gec_backend}) …"
+    )
     detectors: List = []
     for name in args.detectors:
         try:
-            detectors.append(load_detector(name, device=args.device))
+            kwargs: dict = {"device": args.device}
+            if name == "gecscore":
+                kwargs["backend"] = args.gec_backend
+                kwargs["openai_model"] = args.openai_model
+                if args.gec_model:
+                    kwargs["gec_model"] = args.gec_model
+            detectors.append(load_detector(name, **kwargs))
             print(f"  [OK] {name}")
         except Exception:
             print(f"  [FAIL] {name}")
@@ -408,6 +474,7 @@ def main() -> None:
             "n_samples": n,
             "max_samples": args.max_samples,
             "device": args.device,
+            "gec_backend": args.gec_backend,
             "detectors_requested": list(args.detectors),
         }
 
@@ -415,9 +482,29 @@ def main() -> None:
         out_path = args.output_dir / f"gecscore__{out_slug}__{ts}.json"
         evaluator = BenchmarkEvaluator(dataset)
         try:
-            evaluator.run_and_save(
-                detectors, out_path, save_scores=args.save_scores, meta=meta, incremental=True
-            )
+            results = evaluator.run(detectors, save_scores=True)
+            for det_name, metrics in results.items():
+                samples = metrics.get("samples") or []
+                if samples:
+                    metrics.update(
+                        _youden_metrics(
+                            [row["label"] for row in samples],
+                            [row["score"] for row in samples],
+                        )
+                    )
+                if not args.save_scores:
+                    metrics.pop("samples", None)
+                auc = metrics.get("roc_auc")
+                f1 = metrics.get("f1")
+                yf1 = metrics.get("youden_f1")
+                if isinstance(auc, float) and isinstance(f1, float) and isinstance(yf1, float):
+                    print(
+                        f"  {det_name}: AUROC {auc * 100:.2f}  "
+                        f"F1 {f1 * 100:.2f}  "
+                        f"Youden F1 {yf1 * 100:.2f} "
+                        f"(threshold {metrics.get('youden_threshold')})"
+                    )
+            evaluator._save_payload(results, out_path, meta)
             print(f"  results -> {out_path}")
         except Exception:
             print(f"  [ERROR] evaluation failed for {f.slug}")
