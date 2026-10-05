@@ -288,3 +288,22 @@ You can contribute by:
 * Adding benchmark datasets
 * Improving documentation
 * Reporting issues and suggesting features
+
+---
+
+## Citation
+
+If you use DetectZoo in your research, please cite:
+
+```bibtex
+@article{ebrahimi2026detectzoo,
+  title   = {DetectZoo: A Unified Toolkit for AI-Generated Content Detection
+             Across Text, Audio, and Image Modalities},
+  author  = {Ebrahimi, Sajad and Jamali, Nima and Shirsalimian, Bardia and
+             McConvey, Kelly and Zhang, Wentao and Mahdavimoghaddam, Jalehsadat and
+             Taranukhin, Maksym and Grossman, Maura and Shwartz, Vered and
+             Deng, Yuntian and Bagheri, Ebrahim},
+  journal = {arXiv preprint arXiv:2606.04205},
+  year    = {2026}
+}
+```
