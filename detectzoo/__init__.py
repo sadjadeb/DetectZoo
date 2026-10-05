@@ -11,6 +11,7 @@ import detectzoo.datasets.text  # noqa: F401
 import detectzoo.detectors.audio  # noqa: F401
 import detectzoo.detectors.image  # noqa: F401
 import detectzoo.detectors.text  # noqa: F401
+import detectzoo.detectors.video  # noqa: F401
 from detectzoo.core.base import BaseDetector, DetectionResult
 from detectzoo.core.registry import (
     list_datasets,

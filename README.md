@@ -2,7 +2,7 @@
 
 ![DetectZoo](https://anonymous.4open.science/api/repo/DetectZoo-1BEC/file/DetectZoo_banner.png?v=6072c3e2)
 
-DetectZoo is a research-oriented Python toolkit that provides **implementations of AI-generated content detectors across multiple modalities**, including **text, images, and audio**.
+DetectZoo is a research-oriented Python toolkit that provides **implementations of AI-generated content detectors across multiple modalities**, including **text, images, audio, and video**.
 
 The goal of DetectZoo is to make detection methods **easy to use, reproducible, and extensible**, enabling researchers and practitioners to benchmark and deploy AI-generated content detectors with minimal effort.
 
@@ -34,7 +34,7 @@ Optional extra for contributors (`pytest`, `pytest-cov`, `ruff`):
 pip install -e ".[dev]"
 ```
 
-The base install already includes dependencies for text, image, and audio detectors.
+The base install already includes dependencies for text, image, audio, and video detectors.
 
 ---
 
@@ -77,6 +77,17 @@ result = detector.predict("speech.wav")
 print(result.score, result.label)
 ```
 
+### Detect AI-generated videos
+
+```python
+from detectzoo import load_detector
+
+detector = load_detector("waverep", device="cuda")
+
+result = detector.predict("video.mp4")
+print(result.score, result.label)
+```
+
 ### List all available detectors
 
 ```python
@@ -86,15 +97,16 @@ print(list_detectors())            # all detectors
 print(list_detectors("text"))      # text-only
 print(list_detectors("image"))     # image-only
 print(list_detectors("audio"))     # audio-only
+print(list_detectors("video"))     # video-only
 ```
 
 ---
 
 ## Supported Detectors
 
-DetectZoo ships detectors for **text**, **images**, and **audio**. Each uses the same interface: `detector.predict(input) → DetectionResult`.
+DetectZoo ships detectors for **text**, **images**, **audio**, and **video**. Each uses the same interface: `detector.predict(input) → DetectionResult`.
 
-See [METHODS_AND_MODELS.md](METHODS_AND_MODELS.md) for detailed tables of supported detectors, including registry names, implementation classes, and method summaries. To programmatically list available detector names in code, use `list_detectors()` or specify a type: `list_detectors("text" | "image" | "audio")`.
+See [METHODS_AND_MODELS.md](METHODS_AND_MODELS.md) for detailed tables of supported detectors, including registry names, implementation classes, and method summaries. To programmatically list available detector names in code, use `list_detectors()` or specify a type: `list_detectors("text" | "image" | "audio" | "video")`.
 
 ---
 
@@ -210,7 +222,7 @@ from detectzoo.core.registry import register_detector
 
 @register_detector("my_detector")
 class MyDetector(BaseDetector):
-    modality = "text"  # or "image" or "audio"
+    modality = "text"  # or "image", "audio" or "video"
 
     def __init__(self, threshold=0.5, device="cpu", **kwargs):
         super().__init__(threshold=threshold, device=device, **kwargs)
