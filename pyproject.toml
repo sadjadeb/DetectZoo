@@ -59,9 +59,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://anonymous.4open.science/r/DetectZoo-1BEC/"
-Repository = "https://anonymous.4open.science/r/DetectZoo-1BEC/"
-Issues = "https://anonymous.4open.science/r/DetectZoo-1BEC/issues"
+Homepage = "https://github.com/sadjadeb/DetectZoo/"
+Repository = "https://github.com/sadjadeb/DetectZoo/"
+Issues = "https://github.com/sadjadeb/DetectZoo/issues"
 
 [tool.setuptools.packages.find]
 include = ["detectzoo*"]

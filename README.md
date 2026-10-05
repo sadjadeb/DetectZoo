@@ -1,6 +1,6 @@
 # DetectZoo
 
-![DetectZoo](https://anonymous.4open.science/api/repo/DetectZoo-1BEC/file/DetectZoo_banner.png?v=6072c3e2)
+![DetectZoo](https://raw.githubusercontent.com/sadjadeb/DetectZoo/main/DetectZoo_banner.png)
 
 DetectZoo is a research-oriented Python toolkit that provides **implementations of AI-generated content detectors across multiple modalities**, including **text, images, audio, and video**.
 
@@ -12,18 +12,16 @@ DetectZoo aggregates detection approaches into a **single, unified API**, allowi
 
 ## Installation
 
-For the sake of anonymity, we put the package on TestPyPI and you can install it with the following command:
-
-*Note: This is a temporary solution and we will release the package on PyPI after the paper is accepted.*
+You can install the package with the following command:
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ detectzoo-anon
+pip install detectzoo
 ```
 
 or install from source:
 
 ```bash
-git clone https://anonymous.4open.science/r/DetectZoo-1BEC/
+git clone https://github.com/sadjadeb/DetectZoo
 cd detectzoo
 pip install -e .
 ```
