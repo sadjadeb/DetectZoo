@@ -14,7 +14,7 @@ class DatasetItem:
     """A single labelled sample.
 
     Attributes:
-        data: The raw content — text string, image path, or audio path.
+        data: The raw content — text string, or an image, audio or video path.
         label: Ground-truth label (``1`` for AI, ``0`` for human).
         metadata: Optional provenance information.
     """

@@ -201,3 +201,9 @@ Datasets integrate with `load_dataset(name, ...)` (see registry via `list_datase
 | Deepfake-Eval-2024 | `DeepfakeEval2024Dataset` | Social-media / TrueMedia.org deepfakes (2024); audio split ~40k clips. Registry: `deepfake_eval_2024`. | Hugging Face (`nuriachandra/Deepfake-Eval-2024`, gated) |
 
 * Note: the `DeepfakeEval2024Dataset` is gated on Hugging Face. You must first request access to the dataset from Hugging Face.
+
+### Video datasets
+
+| Dataset | Class | Description | Auto-download source |
+|---------|-------|-------------|----------------------|
+| FakeParts | `FakePartsDataset` | FakePartsBench test set (~82k videos): full generations (T2V, TI2V from Sora, Veo2, Wan, CogVideoX, …) and partial edits (inpainting, outpainting, interpolation, extrapolation, style change, face swap), plus TenKReal real videos. Filter with `tasks=[...]` / `methods=[...]`. Videos are streamed one at a time from the Hub's parquet shards, so `max_samples=N` (seeded, class-balanced) fetches only those N videos. Registry: `fakeparts`. | Hugging Face (`hi-paris/FakeParts`) |

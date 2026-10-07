@@ -27,6 +27,7 @@ from detectzoo.datasets.text import (
     WritingPromptsDataset,
     XSumDataset,
 )
+from detectzoo.datasets.video import FakePartsDataset
 
 __all__ = [
     "BaseDataset",
@@ -51,4 +52,5 @@ __all__ = [
     "TuringBenchDataset",
     "WritingPromptsDataset",
     "XSumDataset",
+    "FakePartsDataset",
 ]
