@@ -8,6 +8,7 @@ import detectzoo.utils.hf_quiet  # noqa: F401
 import detectzoo.datasets.audio  # noqa: F401
 import detectzoo.datasets.image  # noqa: F401
 import detectzoo.datasets.text  # noqa: F401
+import detectzoo.datasets.video  # noqa: F401
 import detectzoo.detectors.audio  # noqa: F401
 import detectzoo.detectors.image  # noqa: F401
 import detectzoo.detectors.text  # noqa: F401
