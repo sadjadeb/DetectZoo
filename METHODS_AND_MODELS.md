@@ -157,6 +157,20 @@ Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, 
 |------|-------|--------|
 | `waverep` | `WaveRepDetector` | DINOv2 ViT fine-tuned frame-by-frame with wavelet-based forensic augmentation; averages frame logits over the first 64 frames. `variant="G4"` (default) is trained on four generators, `variant="G1"` on Pyramid Flow only. (Corvi et al., NeurIPS 2025) |
 
+**Training-free methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `split` | `SPLITDetector` | Spatial Patch-Level Incoherence and Temporal Roughness. Scores patch tokens of a frozen encoder (`encoder="XCLIP-16"` default; CLIP-16/32, XCLIP-32, DINOv2-base/large) over 16 frames at 8 fps: two-step temporal roughness combined with local spatial motion incoherence. Handles fully generated and partially edited videos. The score is unbounded, so set the threshold from real videos with `calibrate(real_videos, target_fpr)`. (Hyun & Kim, ECCV 2026) |
+
+**MLLM-based methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `busterx` | `BusterXDetector` | BusterX++: an RL-tuned multimodal LLM (Qwen3.5-4B) that views frames sampled at 2 fps, reasons about forgery cues and answers real/fake in `\boxed{}`. The score is P(fake) at the answer token and the full explanation is returned in `metadata["response"]`. Needs a GPU (~10 GB) and generates several hundred to a few thousand tokens per video. (Wen et al., 2025) |
+
+* Note: `busterx` weights (`l8cv/BusterX-plusplus`) are gated on Hugging Face (approved automatically). Request access on the model page and log in with `hf auth login` first.
+
 ---
 
 ## Built-in datasets

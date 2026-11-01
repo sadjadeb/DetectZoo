@@ -1,9 +1,10 @@
 """Tests for video-modality detectors.
 
-The non-slow tests cover registration and the ``BaseVideoDetector`` helpers
+The non-slow tests cover registration, the ``BaseVideoDetector`` helpers
 (input normalisation, frame sampling, score aggregation) with a model-free
-dummy detector.  Running WaveRep requires downloading its checkpoint and is
-marked ``@pytest.mark.slow``.
+dummy detector, and BusterX's model-free helpers (frame sampling, resizing,
+answer parsing).  Running WaveRep or BusterX requires downloading checkpoints
+(BusterX's is gated) and is marked ``@pytest.mark.slow``.
 """
 
 from __future__ import annotations
@@ -139,3 +140,198 @@ class TestWaveRepDetector:
         assert result.label in ("ai", "human")
         assert result.metadata["num_frames"] == 4
         assert len(result.metadata["frame_logits"]) == 4
+
+
+class TestBusterXHelpers:
+    def test_registered_with_aliases(self):
+        require_modality("video")
+        assert "busterx" in set(list_detectors("video"))
+        assert _ALIASES.get("busterx_plusplus") == "busterx"
+        assert _ALIASES.get("busterx++") == "busterx"
+
+    def test_invalid_sample_fps(self):
+        require_modality("video")
+        with pytest.raises(ValueError, match="sample_fps"):
+            load_detector("busterx", sample_fps=0)
+
+    def test_frame_indices_follow_upstream(self):
+        require_modality("video")
+        from detectzoo.detectors.video.busterx import _frame_indices
+
+        # 3 s at 30 fps sampled at 2 fps -> t = 0, 0.5, ..., 2.5
+        assert _frame_indices(90, 30.0, 2.0) == [0, 15, 30, 45, 60, 75]
+        assert _frame_indices(1, 24.0, 2.0) == [0]  # shorter than one step
+        assert _frame_indices(0, 24.0, 2.0) == []
+
+    def test_smart_resize_matches_64_tokens(self):
+        require_modality("video")
+        from detectzoo.detectors.video.busterx import _smart_resize
+
+        pixels = 64 * 32**2
+        assert _smart_resize(1024, 1024, 32, pixels) == (256, 256)
+        h, w = _smart_resize(720, 1280, 32, pixels)
+        assert h % 32 == 0 and w % 32 == 0 and h * w <= pixels and w > h
+
+    @pytest.mark.parametrize(
+        "response, expected",
+        [
+            ("<think>\nreasoning \\boxed{A}</think>\n\nSo \\boxed{B}", "B"),
+            ("<think>x</think>\n\\boxed{A}", "A"),
+            ("<think>x</think>\\boxed{\\text{B}}", "B"),
+            ("<think>x</think>\\boxed{B) fake}", "B"),
+            ("<think>x</think>\\boxed{real}", "A"),
+            ("<think>never finished", None),
+            ("<think>x</think> The answer is B.", None),
+        ],
+    )
+    def test_parse_answer(self, response, expected):
+        require_modality("video")
+        from detectzoo.detectors.video.busterx import _parse_answer
+
+        assert _parse_answer(response) == expected
+
+    def test_answer_step_finds_final_boxed_letter(self):
+        require_modality("video")
+        from detectzoo.detectors.video.busterx import BusterXDetector
+
+        vocab = ["\\", "boxed", "{", "A", "B", "}", "</think>", "x"]
+
+        class _Tok:
+            def convert_tokens_to_ids(self, toks):
+                return (
+                    [vocab.index(t) for t in toks] if isinstance(toks, list) else vocab.index(toks)
+                )
+
+            def decode(self, ids):
+                return "".join(vocab[i] for i in ids)
+
+        class _Proc:
+            tokenizer = _Tok()
+
+        det = BusterXDetector()
+        det._processor = _Proc()
+        ids = lambda *toks: [vocab.index(t) for t in toks]  # noqa: E731
+        # boxed{A} inside the reasoning is ignored; the answer after </think> counts.
+        gen = ids("\\", "boxed", "{", "A", "}", "</think>", "x", "\\", "boxed", "{", "B", "}")
+        assert det._answer_step(gen) == 10
+        assert det._answer_step(ids("x", "A", "x")) is None
+
+    def test_frames_from_array_get_sample_fps_timestamps(self):
+        require_modality("video")
+        from detectzoo.detectors.video.busterx import BusterXDetector
+
+        frames, ts = BusterXDetector(sample_fps=2.0)._load_frames(
+            np.zeros((3, 8, 8, 3), dtype=np.uint8)
+        )
+        assert len(frames) == 3 and frames[0].shape == (8, 8, 3)
+        assert ts == [0.0, 0.5, 1.0]
+
+
+@pytest.mark.slow
+class TestBusterXDetector:
+    def test_predict_on_synthetic_video(self, tmp_path):
+        require_modality("video")
+        if not torch.cuda.is_available():
+            pytest.skip("BusterX (4B MLLM) needs a GPU")
+        cv2 = pytest.importorskip("cv2")
+        path = tmp_path / "clip.avi"
+        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 10, (256, 256))
+        rng = np.random.default_rng(0)
+        for _ in range(10):
+            writer.write(rng.integers(0, 255, (256, 256, 3), dtype=np.uint8))
+        writer.release()
+
+        det = load_detector("busterx", device="cuda", max_new_tokens=1024)
+        result = det.predict(path)
+        assert isinstance(result, DetectionResult)
+        assert 0.0 <= result.score <= 1.0
+        assert result.metadata["num_frames"] == 2  # 1 s at 2 fps
+        assert result.metadata["response"].startswith("<think>")
+
+
+class TestSPLITHelpers:
+    def test_registered_and_validates_encoder(self):
+        require_modality("video")
+        assert "split" in set(list_detectors("video"))
+        assert _ALIASES.get("split_eccv") == "split"
+        with pytest.raises(ValueError, match="encoder"):
+            load_detector("split", encoder="ResNet-18")
+
+    def test_window_sampling_and_frame_count(self):
+        require_modality("video")
+        from detectzoo.detectors.video.split import _keep_count, _window_frame_indices
+
+        # 30 fps, window [2 s, 5 s) at 8 fps -> 24 frames starting at frame 60
+        idx = _window_frame_indices(300, 30.0, 2.0)
+        assert len(idx) == 24 and idx[0] == 60 and idx[1] == 64
+        # a 1.5 s clip only yields 12 frames
+        assert len(_window_frame_indices(45, 30.0, 0.0)) == 12
+        assert _keep_count(24) == 16 and _keep_count(12) == 8
+        with pytest.raises(ValueError, match="at least 8"):
+            _keep_count(7)
+
+    def test_crop_center_trims_longer_side(self):
+        require_modality("video")
+        from detectzoo.detectors.video.split import _crop_center
+
+        assert _crop_center(np.zeros((100, 200, 3))).shape == (100, 160, 3)
+        assert _crop_center(np.zeros((200, 100, 3))).shape == (160, 100, 3)
+
+    def test_ttr_smooth_vs_jittery(self):
+        require_modality("video")
+        from detectzoo.detectors.video.split import _ttr
+
+        t = torch.arange(8, dtype=torch.float32)[None, :, None]
+        smooth = torch.cat([t, 2 * t], dim=-1)  # constant velocity: 1-step == 2-step / 2
+        jitter = torch.cat([t % 2, t % 2], dim=-1)  # back and forth: 2-step change is 0
+        assert _ttr(smooth).item() == pytest.approx(0.0, abs=1e-5)
+        assert _ttr(jitter).item() > 5
+
+    def test_split_components_static_video_has_zero_lsmi(self):
+        require_modality("video")
+        from detectzoo.detectors.video.split import split_components
+
+        tokens = torch.randn(1, 196, 8).repeat(16, 1, 1)  # identical frames, 14x14 patches
+        _ttr_val, lsmi = split_components(tokens)
+        assert lsmi.item() == pytest.approx(0.0, abs=1e-6)
+
+    def test_array_input_is_bgr_and_truncated(self):
+        require_modality("video")
+        from detectzoo.detectors.video.split import SPLITDetector
+
+        rgb = np.zeros((20, 8, 8, 3), dtype=np.uint8)
+        rgb[..., 0] = 255  # red
+        frames = SPLITDetector()._load_frames(rgb)
+        assert len(frames) == 16
+        assert frames[0][0, 0].tolist() == [0, 0, 255]  # red in BGR order
+
+    def test_calibrate_uses_real_score_quantile(self, monkeypatch):
+        require_modality("video")
+        from detectzoo.detectors.video.split import SPLITDetector
+
+        det = SPLITDetector()
+        monkeypatch.setattr(det, "score_components", lambda x: {"score": float(x)})
+        reals = list(range(1, 101))  # scores 1..100
+        assert det.calibrate(reals, target_fpr=0.05) == 96.0
+        assert det.threshold == 96.0
+        with pytest.raises(ValueError):
+            det.calibrate(reals, target_fpr=0.0)
+
+
+@pytest.mark.slow
+class TestSPLITDetector:
+    def test_predict_on_synthetic_video(self, tmp_path):
+        require_modality("video")
+        cv2 = pytest.importorskip("cv2")
+        path = tmp_path / "clip.avi"
+        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 24, (320, 240))
+        rng = np.random.default_rng(0)
+        for _ in range(96):  # 4 s
+            writer.write(rng.integers(0, 255, (240, 320, 3), dtype=np.uint8))
+        writer.release()
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        result = load_detector("split", device=device).predict(path)
+        assert isinstance(result, DetectionResult)
+        assert np.isfinite(result.score) and result.score >= 0
+        assert result.metadata["num_frames"] == 16
