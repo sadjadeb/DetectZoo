@@ -157,6 +157,31 @@ Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, 
 |------|-------|--------|
 | `waverep` | `WaveRepDetector` | DINOv2 ViT fine-tuned frame-by-frame with wavelet-based forensic augmentation; averages frame logits over the first 64 frames. `variant="G4"` (default) is trained on four generators, `variant="G1"` on Pyramid Flow only. (Corvi et al., NeurIPS 2025) |
 
+**Training-free methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `split` | `SPLITDetector` | Spatial Patch-Level Incoherence and Temporal Roughness. Scores patch tokens of a frozen encoder (`encoder="XCLIP-16"` default; CLIP-16/32, XCLIP-32, DINOv2-base/large) over 16 frames at 8 fps: two-step temporal roughness combined with local spatial motion incoherence. Handles fully generated and partially edited videos. The score is unbounded, so set the threshold from real videos with `calibrate(real_videos, target_fpr)`. (Hyun & Kim, ECCV 2026) |
+| `stall` | `STALLDetector` | Spatial-Temporal Anomaly Log-Likelihoods. Embeds a 2 s window at 8 fps with DINOv3 ViT-L/16 and scores how unusual the frame appearance (spatial) and frame-to-frame motion (temporal) are under whitened Gaussian models fitted on real VATEX videos; the two percentiles against VATEX calibration scores are averaged. No training or fake videos needed. `score = 1 - STALL score` (STALL's own score is higher for real videos). (Ben Hayun et al., CVPR 2026) |
+
+**Reference-based methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `nsgvd` | `NSGVDDetector` | Normalized Spatiotemporal Gradient video detection. A pre-trained diffusion model (OpenAI 256x256 unconditional) estimates the spatial score of 8 frames; its ratio to the temporal frame change (NSG) is embedded by a trained Swin/TALL network, and the video is scored by the deep-kernel MMD to a set of **real reference videos** (`score > 1` means generated). Call `set_reference(real_videos)` (or `load_reference(path)`) before `predict`. Released checkpoints via `checkpoint=` (default `standard-SEINE-mp`). (Zhang et al., NeurIPS 2025) |
+
+**MLLM-based methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `busterx` | `BusterXDetector` | BusterX++: an RL-tuned multimodal LLM (Qwen3.5-4B) that views frames sampled at 2 fps, reasons about forgery cues and answers real/fake in `\boxed{}`. The score is P(fake) at the answer token and the full explanation is returned in `metadata["response"]`. Needs a GPU (~10 GB) and generates several hundred to a few thousand tokens per video. (Wen et al., 2025) |
+| `videoveritas` | `VideoVeritasDetector` | VideoVeritas: a Qwen3-VL-8B model tuned with Joint Preference Alignment and Perception Pretext RL (spatio-temporal grounding and object counting). It reasons over the first 5 s of the video at 3 fps and answers in `<answer>real/fake</answer>`. Follows the authors' sampling at temperature 0.7, seeded per call (`temperature=0` for greedy). The score is P(fake) at the answer token and the explanation is returned in `metadata["response"]`. Needs a GPU (~20 GB). (Tan et al., ICML 2026) |
+
+* Note: `busterx` weights (`l8cv/BusterX-plusplus`) are gated on Hugging Face (approved automatically). Request access on the model page and log in with `hf auth login` first.
+* Note: `videoveritas` weights (`EricTanh/VideoVeritas`, ~17.5 GB) are downloaded from ModelScope; set `MODELSCOPE_CACHE` or pass `cache_dir=` to choose where they are stored.
+* Note: `stall` uses DINOv3 (`facebook/dinov3-vitl16-pretrain-lvd1689m`), which is gated on Hugging Face with manual approval by Meta. Request access on the model page and log in with `hf auth login` first. The VATEX calibration file (~17 MB) is downloaded from the upstream repository.
+* Note: `nsgvd` downloads OpenAI's `256x256_diffusion_uncond.pt` (~2.2 GB) and needs the `ffmpeg` program on `PATH` by default, because its checkpoints were trained on frames extracted to JPEG by ffmpeg (`frame_backend="opencv"` avoids ffmpeg, but scores then deviate from upstream). It scores videos relative to real reference videos you provide (upstream uses 100 MSR-VTT clips).
+
 ---
 
 ## Built-in datasets
@@ -207,3 +232,4 @@ Datasets integrate with `load_dataset(name, ...)` (see registry via `list_datase
 | Dataset | Class | Description | Auto-download source |
 |---------|-------|-------------|----------------------|
 | FakeParts | `FakePartsDataset` | FakePartsBench test set (~82k videos): full generations (T2V, TI2V from Sora, Veo2, Wan, CogVideoX, …) and partial edits (inpainting, outpainting, interpolation, extrapolation, style change, face swap), plus TenKReal real videos. Filter with `tasks=[...]` / `methods=[...]`. Videos are streamed one at a time from the Hub's parquet shards, so `max_samples=N` (seeded, class-balanced) fetches only those N videos. Registry: `fakeparts`. | Hugging Face (`hi-paris/FakeParts`) |
+| GenBuster-Bench | `GenBusterBenchDataset` | BusterX video benchmark (3,150 videos): 1,000 real + 1,000 fake from in-distribution generators (`id`: CogVideoX, EasyAnimate, HunyuanVideo, LTX-Video), 1,000 fake from unseen generators (`ood`: Sora, Kling, Pika, Luma, Gen-3, …) and 150 from recent commercial models (`wild`: Veo 3.1, Sora 2, Kling 2.6, Seedance, …). Filter with `settings=[...]` / `generators=[...]`; the `id` real videos serve as the real class for every setting. Registry: `genbuster_bench`. | Hugging Face (`l8cv/GenBuster-Bench`) |
