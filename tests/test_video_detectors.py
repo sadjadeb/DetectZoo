@@ -335,3 +335,109 @@ class TestSPLITDetector:
         assert isinstance(result, DetectionResult)
         assert np.isfinite(result.score) and result.score >= 0
         assert result.metadata["num_frames"] == 16
+
+
+class TestSTALLHelpers:
+    def test_registered_and_validates_duration(self):
+        require_modality("video")
+        assert "stall" in set(list_detectors("video"))
+        assert _ALIASES.get("stall_cvpr2026") == "stall"
+        with pytest.raises(ValueError, match="duration"):
+            load_detector("stall", duration=5)
+
+    def test_downsample_frames_follow_upstream(self):
+        require_modality("video")
+        from detectzoo.detectors.video.stall import downsample_frames
+
+        # 30 fps -> 8 fps: ratio 3.75, Python round() as upstream
+        assert downsample_frames(30, 30.0)[:6] == [0, 4, 8, 11, 15, 19]
+        assert downsample_frames(16, 8.0) == list(range(16))
+        with pytest.raises(ValueError, match="at least 8"):
+            downsample_frames(30, 6.0)
+
+    def test_windows_use_one_seeded_rng_in_order(self):
+        require_modality("video")
+        from detectzoo.detectors.video.stall import compute_windows
+
+        idxs = list(range(0, 400, 5))  # 80 downsampled frames
+        windows = compute_windows(idxs)
+        rng = np.random.RandomState(42)
+        starts = [rng.randint(0, len(idxs) - n + 1) for n in (8, 16, 24, 32)]
+        for (dur, n), start in zip(((1, 8), (2, 16), (3, 24), (4, 32)), starts):
+            assert windows[dur] == idxs[start : start + n]
+        assert compute_windows(list(range(10)))[2] is None  # too short for 16 frames
+
+    def _params(self, d=4):
+        from detectzoo.detectors.video.stall import load_params
+
+        return (
+            d,
+            {
+                "mu_spat": np.zeros(d, np.float32),
+                "W_spat": np.eye(d, dtype=np.float32),
+                "mu_temp": np.zeros(d, np.float32),
+                "W_temp": np.eye(d, dtype=np.float32),
+            },
+            load_params,
+        )
+
+    def test_stall_scores_percentiles_and_zero_diff(self, tmp_path):
+        require_modality("video")
+        from detectzoo.detectors.video.stall import stall_scores
+
+        d, base, load_params = self._params()
+        calib_spat = np.linspace(-20, 0, 100)[:, None].repeat(3, 1)
+        calib_temp = np.linspace(-20, 0, 100)[:, None].repeat(2, 1)
+        np.savez(tmp_path / "p.npz", **base, calib_ll_spat=calib_spat, calib_ll_temp=calib_temp)
+        params = load_params(tmp_path / "p.npz")
+
+        embs = np.zeros((4, d), np.float32)
+        embs[2, 0] = 1.0  # one frame moves away and back
+        embs[3] = embs[2]  # last pair identical -> excluded from the temporal min
+        s = stall_scores(embs, params)
+        ll0 = -0.5 * d * np.log(2 * np.pi)
+        assert s["spat_ll_agg"] == pytest.approx(ll0)  # max over frames: an all-zero frame
+        assert np.isfinite(s["temp_ll_agg"])
+        expected_spat = np.searchsorted(params["calib_spat_sorted"], ll0, side="right") / 100
+        assert s["spat_percentile"] == pytest.approx(expected_spat)
+        assert s["stall_score"] == pytest.approx(
+            0.5 * (s["spat_percentile"] + s["temp_percentile"])
+        )
+
+    def test_predict_flips_score_direction(self, monkeypatch, tmp_path):
+        require_modality("video")
+        from detectzoo.detectors.video.stall import STALLDetector
+
+        d, base, _ = self._params()
+        rng = np.random.default_rng(0)
+        np.savez(
+            tmp_path / "p.npz",
+            **base,
+            calib_ll_spat=rng.normal(-5, 1, (50, 3)),
+            calib_ll_temp=rng.normal(-5, 1, (50, 2)),
+        )
+        det = STALLDetector(params_path=tmp_path / "p.npz")
+        monkeypatch.setattr(det, "embed", lambda frames: rng.normal(0, 0.1, (len(frames), d)))
+        r = det.predict(np.zeros((4, 8, 8, 3), dtype=np.uint8))
+        assert r.score == pytest.approx(1.0 - r.metadata["stall_score"])
+        assert r.metadata["num_frames"] == 4
+        assert 0.0 <= r.score <= 1.0
+
+
+@pytest.mark.slow
+class TestSTALLDetector:
+    def test_predict_on_synthetic_video(self, tmp_path):
+        require_modality("video")
+        cv2 = pytest.importorskip("cv2")
+        path = tmp_path / "clip.avi"
+        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 24, (160, 120))
+        rng = np.random.default_rng(0)
+        for _ in range(72):  # 3 s at 24 fps
+            writer.write(rng.integers(0, 255, (120, 160, 3), dtype=np.uint8))
+        writer.release()
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        result = load_detector("stall", device=device).predict(path)
+        assert isinstance(result, DetectionResult)
+        assert 0.0 <= result.score <= 1.0
+        assert result.metadata["num_frames"] == 16
