@@ -164,6 +164,12 @@ Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, 
 | `split` | `SPLITDetector` | Spatial Patch-Level Incoherence and Temporal Roughness. Scores patch tokens of a frozen encoder (`encoder="XCLIP-16"` default; CLIP-16/32, XCLIP-32, DINOv2-base/large) over 16 frames at 8 fps: two-step temporal roughness combined with local spatial motion incoherence. Handles fully generated and partially edited videos. The score is unbounded, so set the threshold from real videos with `calibrate(real_videos, target_fpr)`. (Hyun & Kim, ECCV 2026) |
 | `stall` | `STALLDetector` | Spatial-Temporal Anomaly Log-Likelihoods. Embeds a 2 s window at 8 fps with DINOv3 ViT-L/16 and scores how unusual the frame appearance (spatial) and frame-to-frame motion (temporal) are under whitened Gaussian models fitted on real VATEX videos; the two percentiles against VATEX calibration scores are averaged. No training or fake videos needed. `score = 1 - STALL score` (STALL's own score is higher for real videos). (Ben Hayun et al., CVPR 2026) |
 
+**Reference-based methods**
+
+| Name | Class | Method |
+|------|-------|--------|
+| `nsgvd` | `NSGVDDetector` | Normalized Spatiotemporal Gradient video detection. A pre-trained diffusion model (OpenAI 256x256 unconditional) estimates the spatial score of 8 frames; its ratio to the temporal frame change (NSG) is embedded by a trained Swin/TALL network, and the video is scored by the deep-kernel MMD to a set of **real reference videos** (`score > 1` means generated). Call `set_reference(real_videos)` (or `load_reference(path)`) before `predict`. Released checkpoints via `checkpoint=` (default `standard-SEINE-mp`). (Zhang et al., NeurIPS 2025) |
+
 **MLLM-based methods**
 
 | Name | Class | Method |
@@ -174,6 +180,7 @@ Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, 
 * Note: `busterx` weights (`l8cv/BusterX-plusplus`) are gated on Hugging Face (approved automatically). Request access on the model page and log in with `hf auth login` first.
 * Note: `videoveritas` weights (`EricTanh/VideoVeritas`, ~17.5 GB) are downloaded from ModelScope; set `MODELSCOPE_CACHE` or pass `cache_dir=` to choose where they are stored.
 * Note: `stall` uses DINOv3 (`facebook/dinov3-vitl16-pretrain-lvd1689m`), which is gated on Hugging Face with manual approval by Meta. Request access on the model page and log in with `hf auth login` first. The VATEX calibration file (~17 MB) is downloaded from the upstream repository.
+* Note: `nsgvd` downloads OpenAI's `256x256_diffusion_uncond.pt` (~2.2 GB) and needs the `ffmpeg` program on `PATH` by default, because its checkpoints were trained on frames extracted to JPEG by ffmpeg (`frame_backend="opencv"` avoids ffmpeg, but scores then deviate from upstream). It scores videos relative to real reference videos you provide (upstream uses 100 MSR-VTT clips).
 
 ---
 

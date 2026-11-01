@@ -9,6 +9,8 @@ answer parsing).  Running WaveRep or BusterX requires downloading checkpoints
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 import torch
@@ -546,3 +548,150 @@ class TestSTALLDetector:
         assert isinstance(result, DetectionResult)
         assert 0.0 <= result.score <= 1.0
         assert result.metadata["num_frames"] == 16
+
+
+class TestNSGVDHelpers:
+    def test_registered_and_validates_checkpoint(self):
+        require_modality("video")
+        assert "nsgvd" in set(list_detectors("video"))
+        assert _ALIASES.get("nsg_vd") == "nsgvd"
+        with pytest.raises(ValueError, match="checkpoint"):
+            load_detector("nsgvd", checkpoint="standard-Sora-mp")
+        with pytest.raises(ValueError, match="frame_backend"):
+            load_detector("nsgvd", frame_backend="decord")
+
+    def test_ffmpeg_backend_needs_ffmpeg(self, monkeypatch):
+        require_modality("video")
+        import detectzoo.detectors.video.nsgvd.detector as nsg
+
+        monkeypatch.setattr(nsg.shutil, "which", lambda name: None)
+        with pytest.raises(RuntimeError, match="ffmpeg"):
+            nsg.NSGVDDetector()
+        nsg.NSGVDDetector(frame_backend="opencv")  # opting out works without ffmpeg
+
+    def test_frame_indices_follow_upstream(self):
+        require_modality("video")
+        from detectzoo.detectors.video.nsgvd.detector import _frame_indices
+
+        assert _frame_indices(81) == [0, 10, 20, 30, 40, 50, 60, 70]  # every 81 // 8 = 10th
+        assert _frame_indices(8) == list(range(8))
+        with pytest.raises(ValueError, match="at least 8"):
+            _frame_indices(7)
+
+    def test_vp_sde_std(self):
+        require_modality("video")
+        from detectzoo.detectors.video.nsgvd.detector import _vp_std
+
+        t = torch.tensor([0.006])
+        expected = math.sqrt(1 - math.exp(2 * (-0.25 * 0.006**2 * 19.9 - 0.5 * 0.006 * 0.1)))
+        assert _vp_std(t).item() == pytest.approx(expected, rel=1e-5)
+
+    def test_nsg_normalisation_and_edge_scaling(self):
+        require_modality("video")
+        from detectzoo.detectors.video.nsgvd.detector import nsg_from_score
+
+        frames = torch.arange(8, dtype=torch.float32).view(8, 1, 1, 1).expand(8, 3, 2, 2).clone()
+        score = torch.ones(8, 3, 2, 2)  # pixel change is 1 everywhere -> denominator = 12
+        nsg = nsg_from_score(score, frames)
+        assert nsg.shape == (8, 3, 2, 2)
+        assert torch.allclose(nsg[1:-1], torch.full_like(nsg[1:-1], 1 / 12))
+        assert torch.allclose(nsg[0], torch.full_like(nsg[0], 100 / 12))
+        assert torch.allclose(nsg[-1], torch.full_like(nsg[-1], 100 / 12))
+
+    def test_preprocess_resizes_to_unit_range(self):
+        require_modality("video")
+        from detectzoo.detectors.video.nsgvd.detector import _preprocess
+
+        x = _preprocess([np.full((48, 64, 3), 255, dtype=np.uint8)] * 2)
+        assert x.shape == (2, 3, 224, 224) and x.max() <= 1.0 and x.min() >= 0.0
+
+    def test_predict_requires_reference(self):
+        require_modality("video")
+        with pytest.raises(RuntimeError, match="set_reference"):
+            load_detector("nsgvd", frame_backend="opencv").predict(
+                np.zeros((8, 8, 8, 3), dtype=np.uint8)
+            )
+
+    def test_array_input_needs_eight_frames(self):
+        require_modality("video")
+        from detectzoo.detectors.video.nsgvd.detector import NSGVDDetector
+
+        with pytest.raises(ValueError, match="exactly 8"):
+            NSGVDDetector(frame_backend="opencv")._load_frames(
+                np.zeros((5, 8, 8, 3), dtype=np.uint8)
+            )
+
+    def _stubbed(self, monkeypatch):
+        """Detector with tiny stand-ins for the diffusion model and discriminator."""
+        from detectzoo.detectors.video.nsgvd.detector import NSGVDDetector
+
+        class _Net(torch.nn.Module):
+            def forward(self, x, out_feature=False):
+                feat = x.flatten(1)[:, :16]
+                return None, feat
+
+        det = NSGVDDetector(frame_backend="opencv")
+        det._model = _Net()
+        det._kernel = {
+            "sigma": torch.tensor(1e3),
+            "sigma0_u": torch.tensor(1.0),
+            "ep": torch.tensor(1e-3),
+        }
+        monkeypatch.setattr(det, "nsg_features", lambda x: torch.as_tensor(x, dtype=torch.float32))
+        return det
+
+    def test_reference_scoring_and_roundtrip(self, monkeypatch, tmp_path):
+        require_modality("video")
+        det = self._stubbed(monkeypatch)
+        g = torch.Generator().manual_seed(0)
+        reals = [torch.randn(8, 3, 4, 4, generator=g) * 0.1 for _ in range(6)]
+        assert det.set_reference(reals) == 6
+        typical = det.predict(torch.randn(8, 3, 4, 4, generator=g) * 0.1).score
+        outlier = det.predict(torch.randn(8, 3, 4, 4, generator=g) * 0.1 + 5.0).score
+        assert np.isfinite(typical) and outlier > typical
+
+        path = tmp_path / "ref.pt"
+        det.save_reference(path)
+        det2 = self._stubbed(monkeypatch)
+        det2.load_reference(path)
+        probe = torch.randn(8, 3, 4, 4, generator=g) * 0.1 + 5.0
+        again = det2.predict(probe)
+        assert again.metadata["num_reference"] == 6
+        assert again.score == pytest.approx(det.predict(probe).score)
+
+    def test_set_reference_needs_two_readable_videos(self, monkeypatch):
+        require_modality("video")
+        det = self._stubbed(monkeypatch)
+
+        def _fail(x):
+            raise ValueError("unreadable")
+
+        monkeypatch.setattr(det, "nsg_features", _fail)
+        with pytest.raises(ValueError, match="at least 2"):
+            det.set_reference(["a.mp4", "b.mp4"])
+
+
+@pytest.mark.slow
+class TestNSGVDDetector:
+    def test_predict_with_reference(self, tmp_path):
+        require_modality("video")
+        if not torch.cuda.is_available():
+            pytest.skip("NSG-VD's diffusion model needs a GPU")
+        cv2 = pytest.importorskip("cv2")
+
+        def _video(name, seed):
+            path = tmp_path / name
+            writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 8, (96, 96))
+            rng = np.random.default_rng(seed)
+            base = rng.integers(0, 255, (96, 96, 3), dtype=np.uint8)
+            for i in range(16):
+                writer.write(np.roll(base, i, axis=1))
+            writer.release()
+            return path
+
+        det = load_detector("nsgvd", device="cuda")
+        assert det.set_reference([_video(f"r{i}.avi", i) for i in range(3)]) == 3
+        result = det.predict(_video("test.avi", 9))
+        assert isinstance(result, DetectionResult)
+        assert np.isfinite(result.score)
+        assert result.metadata["num_reference"] == 3
