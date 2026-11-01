@@ -168,8 +168,10 @@ Detectors for AI-generated videos. Each accepts a video file path, a `[T, H, W, 
 | Name | Class | Method |
 |------|-------|--------|
 | `busterx` | `BusterXDetector` | BusterX++: an RL-tuned multimodal LLM (Qwen3.5-4B) that views frames sampled at 2 fps, reasons about forgery cues and answers real/fake in `\boxed{}`. The score is P(fake) at the answer token and the full explanation is returned in `metadata["response"]`. Needs a GPU (~10 GB) and generates several hundred to a few thousand tokens per video. (Wen et al., 2025) |
+| `videoveritas` | `VideoVeritasDetector` | VideoVeritas: a Qwen3-VL-8B model tuned with Joint Preference Alignment and Perception Pretext RL (spatio-temporal grounding and object counting). It reasons over the first 5 s of the video at 3 fps and answers in `<answer>real/fake</answer>`. Follows the authors' sampling at temperature 0.7, seeded per call (`temperature=0` for greedy). The score is P(fake) at the answer token and the explanation is returned in `metadata["response"]`. Needs a GPU (~20 GB). (Tan et al., ICML 2026) |
 
 * Note: `busterx` weights (`l8cv/BusterX-plusplus`) are gated on Hugging Face (approved automatically). Request access on the model page and log in with `hf auth login` first.
+* Note: `videoveritas` weights (`EricTanh/VideoVeritas`, ~17.5 GB) are downloaded from ModelScope; set `MODELSCOPE_CACHE` or pass `cache_dir=` to choose where they are stored.
 
 ---
 

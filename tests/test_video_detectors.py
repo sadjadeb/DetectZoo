@@ -335,3 +335,108 @@ class TestSPLITDetector:
         assert isinstance(result, DetectionResult)
         assert np.isfinite(result.score) and result.score >= 0
         assert result.metadata["num_frames"] == 16
+
+
+class TestVideoVeritasHelpers:
+    def test_registered_and_validates_args(self):
+        require_modality("video")
+        assert "videoveritas" in set(list_detectors("video"))
+        assert _ALIASES.get("video_veritas") == "videoveritas"
+        with pytest.raises(ValueError, match="fps"):
+            load_detector("videoveritas", fps=0)
+        with pytest.raises(ValueError, match="temperature"):
+            load_detector("videoveritas", temperature=-1)
+
+    def test_frame_indices_follow_upstream(self):
+        require_modality("video")
+        from detectzoo.detectors.video.videoveritas import _frame_indices
+
+        # 10 s at 24 fps, first 5 s at 3 fps: frames 0..120 -> 15.1 -> 14 frames
+        idx = _frame_indices(240, 24.0, 3.0, 5.0)
+        assert len(idx) == 14 and idx[0] == 0 and idx[-1] == 120
+        # a 1 s clip still yields the minimum of 4 frames
+        assert len(_frame_indices(24, 24.0, 3.0, 5.0)) == 4
+        # frame counts are always even
+        assert all(len(_frame_indices(n, 30.0, 3.0, 5.0)) % 2 == 0 for n in range(30, 200, 7))
+
+    def test_resize_caps_tokens_per_frame(self):
+        require_modality("video")
+        from detectzoo.detectors.video.videoveritas import _resized_hw
+
+        assert _resized_hw(1024, 1024, 14, 32) == (864, 864)  # <= 768 tokens of 32x32
+        h, w = _resized_hw(1080, 1920, 14, 32)
+        assert h % 32 == 0 and w % 32 == 0 and h * w <= 768 * 32 * 32
+        h, w = _resized_hw(64, 64, 14, 32)  # tiny frames are upscaled to >= 128 tokens
+        assert h * w >= 128 * 32 * 32
+
+    @pytest.mark.parametrize(
+        "response, expected",
+        [
+            ("Some reasoning. <answer>fake</answer>", "fake"),
+            ("<answer> Real </answer>", "real"),
+            ("<answer>The video is FAKE.</answer>", "fake"),
+            ("<answer>real or fake?</answer>", None),
+            ("no tags, it is fake", None),
+        ],
+    )
+    def test_parse_answer(self, response, expected):
+        require_modality("video")
+        from detectzoo.detectors.video.videoveritas import _parse_answer
+
+        assert _parse_answer(response) == expected
+
+    def test_answer_step_after_last_tag(self):
+        require_modality("video")
+        from detectzoo.detectors.video.videoveritas import VideoVeritasDetector
+
+        vocab = ["<answer>", " ", "fake", "real", "</answer>", "x", "Fake", " real", "\n"]
+
+        class _Tok:
+            def decode(self, ids, **kwargs):
+                return "".join(vocab[i] if i < len(vocab) else "" for i in ids)
+
+            def encode(self, text, add_special_tokens=False):
+                return [vocab.index(text)] if text in vocab else [len(vocab)]  # unused id
+
+        class _Proc:
+            tokenizer = _Tok()
+
+        det = VideoVeritasDetector()
+        det._processor = _Proc()
+        ids = lambda *toks: [vocab.index(t) for t in toks]  # noqa: E731
+        gen = ids("<answer>", "real", "</answer>", "x", "<answer>", " ", "fake", "</answer>")
+        assert det._answer_step(gen) == 6  # whitespace skipped, last tag wins
+        assert det._answer_step(ids("x", "fake")) is None
+        assert det._answer_step(ids("<answer>", "x", "</answer>")) is None
+
+    def test_array_input_padded_to_even_frames(self):
+        require_modality("video")
+        from detectzoo.detectors.video.videoveritas import VideoVeritasDetector
+
+        frames, meta = VideoVeritasDetector(fps=3.0)._load_video(
+            np.zeros((5, 8, 8, 3), dtype=np.uint8)
+        )
+        assert frames.shape[0] == 6 and meta["frames_indices"] == list(range(6))
+        assert meta["fps"] == 3.0
+
+
+@pytest.mark.slow
+class TestVideoVeritasDetector:
+    def test_predict_on_synthetic_video(self, tmp_path):
+        require_modality("video")
+        if not torch.cuda.is_available():
+            pytest.skip("VideoVeritas (8B MLLM) needs a GPU")
+        cv2 = pytest.importorskip("cv2")
+        path = tmp_path / "clip.avi"
+        writer = cv2.VideoWriter(str(path), cv2.VideoWriter_fourcc(*"MJPG"), 12, (256, 256))
+        rng = np.random.default_rng(0)
+        for _ in range(24):  # 2 s
+            writer.write(rng.integers(0, 255, (256, 256, 3), dtype=np.uint8))
+        writer.release()
+
+        det = load_detector("videoveritas", device="cuda", max_new_tokens=1024)
+        result = det.predict(path)
+        assert isinstance(result, DetectionResult)
+        assert 0.0 <= result.score <= 1.0
+        assert result.metadata["num_frames"] == 6  # 2 s at 3 fps
+        assert result.metadata["answer"] in ("real", "fake", None)
